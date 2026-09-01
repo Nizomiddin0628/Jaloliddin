@@ -16,8 +16,15 @@ from rest_framework.decorators import api_view, throttle_classes
 from rest_framework.response import Response
 from rest_framework.throttling import AnonRateThrottle
 
-from .models import Guest, GuestUpload, Rsvp, Wedding
-from .serializers import GuestSerializer, GuestUploadSerializer, RsvpCreateSerializer, WeddingSerializer
+from .models import Guest, GuestUpload, Rsvp, Wedding, Wish
+from .serializers import (
+    GuestSerializer,
+    GuestUploadSerializer,
+    RsvpCreateSerializer,
+    WeddingSerializer,
+    WishCreateSerializer,
+    WishSerializer,
+)
 
 ALLOWED_PREFIXES = ("image/", "video/")
 # iOS ba'zan HEIC/HEIF uchun bo'sh yoki noto'g'ri MIME yuboradi — kengaytma bo'yicha ham tekshiramiz
@@ -71,12 +78,30 @@ def invitation_page(request):
             )
 
     local = timezone.localtime(wedding.event_at)
+    has_point = wedding.latitude is not None and wedding.longitude is not None
+
+    # Navigatorda ochish uchun havola
     map_href = wedding.map_url
-    if not map_href and wedding.latitude and wedding.longitude:
+    if not map_href and has_point:
         map_href = (
             f"https://yandex.uz/maps/?pt={wedding.longitude},"
             f"{wedding.latitude}&z=17&l=map"
         )
+
+    # Sahifaga o'rnatiladigan xarita (OpenStreetMap, API kaliti kerak emas)
+    map_embed = None
+    if has_point:
+        lat, lon = wedding.latitude, wedding.longitude
+        d_lat, d_lon = 0.0035, 0.006
+        map_embed = (
+            "https://www.openstreetmap.org/export/embed.html"
+            f"?bbox={lon - d_lon}%2C{lat - d_lat}%2C{lon + d_lon}%2C{lat + d_lat}"
+            f"&layer=mapnik&marker={lat}%2C{lon}"
+        )
+
+    # Bo'limlar orasida kenglikni to'la egallaydigan rasmlar
+    photos = list(wedding.gallery.all())
+    bands = photos[1:3]
 
     return render(
         request,
@@ -86,12 +111,16 @@ def invitation_page(request):
             "guest": guest,
             "guest_code": code,
             "timeline": wedding.timeline.all(),
-            "gallery": wedding.gallery.all(),
+            "gallery": photos,
+            "band_one": bands[0] if len(bands) > 0 else None,
+            "band_two": bands[1] if len(bands) > 1 else None,
+            "wishes": wedding.wishes.filter(is_visible=True)[:50],
             "event_iso": wedding.event_at.isoformat(),
             "event_date": format_uz_date(local),
             "event_weekday": UZ_WEEKDAYS[int(local.strftime("%w"))],
             "event_time": local.strftime("%H:%M"),
             "map_href": map_href,
+            "map_embed": map_embed,
             "max_upload_mb": settings.MAX_UPLOAD_SIZE_MB,
             "site_url": settings.SITE_URL,
         },
@@ -223,6 +252,22 @@ def upload_create(request):
         is_video=ext in VIDEO_EXTENSIONS or ctype.startswith("video/"),
     )
     return Response(GuestUploadSerializer(obj).data, status=status.HTTP_201_CREATED)
+
+
+@api_view(["POST"])
+@throttle_classes([RsvpThrottle])
+def wish_create(request):
+    """Mehmon tilagi. Darhol sahifada ko'rinadi, admin yashira oladi."""
+    wedding = get_wedding()
+
+    serializer = WishCreateSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
+
+    code = (request.data.get("guest_code") or "").strip()
+    guest = Guest.objects.filter(wedding=wedding, code__iexact=code).first() if code else None
+
+    wish = Wish.objects.create(wedding=wedding, guest=guest, **serializer.validated_data)
+    return Response(WishSerializer(wish).data, status=status.HTTP_201_CREATED)
 
 
 # ------------------------------------------------------- admin: ko'rish/yuklash

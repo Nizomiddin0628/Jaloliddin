@@ -7,6 +7,7 @@ urlpatterns = [
     path("wedding/", views.wedding_detail, name="wedding-detail"),
     path("rsvp/", views.rsvp_create, name="rsvp-create"),
     path("uploads/", views.upload_create, name="upload-create"),
+    path("wishes/", views.wish_create, name="wish-create"),
     # Faqat admin uchun — yuklangan fayllarni ko'rish va olish
     path("private/uploads/browser/", views.uploads_browser, name="uploads-browser"),
     path("private/uploads/all.zip", views.download_all, name="uploads-download-all"),

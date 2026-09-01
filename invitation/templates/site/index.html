@@ -4,9 +4,9 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="robots" content="noindex, nofollow">
-  <meta name="theme-color" content="#f5f1e6">
+  <meta name="theme-color" content="#14120f">
   <title>{{ w.groom_name }} va {{ w.bride_name }}</title>
-  <meta name="description" content="{{ w.invite_text|default:'Sizni to`y marosimimizga taklif qilamiz.'|truncatechars:150 }}">
+  <meta name="description" content="{{ event_date }} · {{ w.venue_name }}">
 
   {# Telegram va WhatsApp'da havola kartochkasi #}
   <meta property="og:type" content="website">
@@ -26,6 +26,8 @@
     window.TAKLIFNOMA = {
       eventIso: "{{ event_iso }}",
       guestCode: "{{ guest_code|escapejs }}",
+      guestName: "{% if guest %}{{ guest.name|escapejs }}{% endif %}",
+      guestSeats: {% if guest %}{{ guest.seats }}{% else %}1{% endif %},
       maxUploadMb: {{ max_upload_mb }},
       csrfToken: "{{ csrf_token }}"
     };
@@ -33,32 +35,36 @@
 </head>
 <body>
 
-{# =============================================== BOSH QISM #}
-{% if w.mode == 'thanks' %}
-  <header class="hero {% if w.hero_image %}hero--photo{% else %}hero--plain{% endif %}">
-    {% if w.hero_image %}
-      <img class="hero__image" src="{{ w.hero_image.url }}" alt="">
-      <div class="hero__veil"></div>
-    {% endif %}
-    <div class="hero__inner reveal">
-      {% if guest %}<p class="hero__greeting">Hurmatli {{ guest.display_name }}</p>{% endif %}
+{# =============================================== BOSH EKRAN #}
+<header class="hero {% if w.hero_image %}hero--photo{% else %}hero--plain{% endif %}">
+  {% if w.hero_image %}
+    <img class="hero__image" src="{{ w.hero_image.url }}" alt="" fetchpriority="high">
+  {% endif %}
+  <div class="hero__veil"></div>
+
+  <div class="hero__inner reveal">
+    {% if w.mode == 'thanks' %}
+      <div class="salute">
+        {% if guest %}
+          <span class="salute__label">Hurmatli</span>
+          <span class="salute__name">{{ guest.display_name }}</span>
+        {% endif %}
+      </div>
       <h1 class="hero__names hero__names--short">{{ w.thanks_title|default:"Rahmat" }}</h1>
       {% if w.thanks_text %}
         <div class="hero__meta hero__meta--block">{{ w.thanks_text|linebreaksbr }}</div>
       {% endif %}
-    </div>
-  </header>
-{% else %}
-  <header class="hero {% if w.hero_image %}hero--photo{% else %}hero--plain{% endif %}">
-    {% if w.hero_image %}
-      <img class="hero__image" src="{{ w.hero_image.url }}" alt="" fetchpriority="high">
-      <div class="hero__veil"></div>
-    {% endif %}
-    <div class="hero__inner reveal">
-      <p class="hero__greeting">
-        {% if guest %}Hurmatli {{ guest.display_name }}, sizni kutamiz
-        {% else %}Sizni to'y marosimimizga taklif qilamiz{% endif %}
-      </p>
+    {% else %}
+      <div class="salute">
+        {% if guest %}
+          <span class="salute__label">Hurmatli</span>
+          <span class="salute__name">{{ guest.display_name }}</span>
+          <span class="salute__note">sizni to'y marosimimizga taklif qilamiz</span>
+        {% else %}
+          <span class="salute__label">Taklifnoma</span>
+          <span class="salute__name">Sizni to'yimizga chorlaymiz</span>
+        {% endif %}
+      </div>
       <h1 class="hero__names">
         {{ w.groom_name }}<span class="hero__amp">va</span>{{ w.bride_name }}
       </h1>
@@ -66,15 +72,17 @@
         <span>{{ event_date }}</span>
         <span>{{ w.venue_name }}</span>
       </div>
-    </div>
-  </header>
-{% endif %}
+    {% endif %}
+  </div>
+
+  <div class="hero__scroll" aria-hidden="true"></div>
+</header>
 
 <main>
 {% if w.mode != 'thanks' %}
 
   {# =============================================== SANOQ VA TAKLIF #}
-  <section class="section shell">
+  <section class="section shell appear">
     <div class="countdown" x-data="countdown()" aria-label="To'yga qolgan vaqt">
       <template x-if="!done">
         <div style="display:contents">
@@ -91,7 +99,8 @@
             <span class="countdown__label">daqiqa</span>
           </div>
           <div class="countdown__unit">
-            <span class="countdown__num" x-text="pad(left.soniya)">—</span>
+            <span class="countdown__num" :class="{ 'is-tick': pulse }"
+                  x-text="pad(left.soniya)">—</span>
             <span class="countdown__label">soniya</span>
           </div>
         </div>
@@ -102,14 +111,19 @@
     </div>
 
     {% if w.invite_text %}
-      <p class="lede" style="margin-top:2.5rem">{{ w.invite_text|linebreaksbr }}</p>
+      <p class="lede" style="margin-top:2.75rem">{{ w.invite_text|linebreaksbr }}</p>
     {% endif %}
   </section>
+
+  {# =============================================== KENG RASM #}
+  {% if band_one %}
+    <div class="band"><img src="{{ band_one.image.url }}" alt="" loading="lazy"></div>
+  {% endif %}
 
   {# =============================================== SEVGI TARIXI #}
   {% if timeline %}
   <section class="section shell">
-    <h2 class="section-title">Shu kungacha</h2>
+    <h2 class="section-title appear">Shu kungacha</h2>
     <ol class="timeline">
       {% for e in timeline %}
         <li>
@@ -125,8 +139,11 @@
 
   {# =============================================== GALEREYA #}
   {% if gallery %}
-  <section class="section shell" x-data="{ open: null }" @keydown.escape.window="open = null">
-    <h2 class="section-title">{% if w.mode == 'thanks' %}O'sha kundan{% else %}Biz haqimizda{% endif %}</h2>
+  <section class="section shell appear" x-data="{ open: null }"
+           @keydown.escape.window="open = null">
+    <h2 class="section-title">
+      {% if w.mode == 'thanks' %}O'sha kundan{% else %}Biz haqimizda{% endif %}
+    </h2>
     <div class="gallery">
       {% for p in gallery %}
         <button class="gallery__item" @click="open = '{{ p.image.url }}'"
@@ -137,15 +154,21 @@
     </div>
     <div class="lightbox" x-show="open" x-cloak @click="open = null"
          role="dialog" aria-modal="true" style="display:none">
-      <button class="lightbox__close" aria-label="Yopish">&times;</button>
+      <button class="lightbox__close" aria-label="Yopish" @click="open = null">&times;</button>
       <img :src="open" alt="">
     </div>
   </section>
   {% endif %}
 
 {% if w.mode != 'thanks' %}
-  {# =============================================== MAROSIM #}
-  <section class="section shell">
+
+  {# =============================================== KENG RASM #}
+  {% if band_two %}
+    <div class="band"><img src="{{ band_two.image.url }}" alt="" loading="lazy"></div>
+  {% endif %}
+
+  {# =============================================== MAROSIM VA XARITA #}
+  <section class="section shell appear">
     <h2 class="section-title">Marosim</h2>
     <dl class="facts">
       <div>
@@ -173,8 +196,23 @@
       </div>
       {% endif %}
     </dl>
-    {% if map_href %}
-      <p style="margin-top:1.75rem">
+
+    {% if map_embed %}
+      <div class="map">
+        <iframe src="{{ map_embed }}" loading="lazy"
+                title="{{ w.venue_name }} joylashuvi"
+                referrerpolicy="no-referrer-when-downgrade"></iframe>
+        <div class="map__foot">
+          <p class="map__addr">{{ w.venue_address|default:w.venue_name }}</p>
+          {% if map_href %}
+            <a class="btn btn--ghost" href="{{ map_href }}" target="_blank" rel="noopener noreferrer">
+              Navigatorda ochish
+            </a>
+          {% endif %}
+        </div>
+      </div>
+    {% elif map_href %}
+      <p style="margin-top:2rem">
         <a class="btn btn--ghost" href="{{ map_href }}" target="_blank" rel="noopener noreferrer">
           Xaritada ochish
         </a>
@@ -184,20 +222,23 @@
 
   {# =============================================== JAVOB #}
   {% if w.rsvp_open %}
-  <section class="section shell" x-data="rsvpForm()">
+  <section class="section shell appear" x-data="rsvpForm()">
     <template x-if="!sent">
       <div>
-        <h2 class="section-title">Kelasizmi?</h2>
-        <p class="lede" style="margin-bottom:2rem">
+        <h2 class="section-title">
+          {% if guest %}{{ guest.name }}, kelasizmi?{% else %}Kelasizmi?{% endif %}
+        </h2>
+        <p class="lede" style="margin-bottom:2.25rem">
           Javobingiz oshpazga aniq son aytishimizga yordam beradi.
         </p>
 
         <form @submit.prevent="submit">
+          {% if not guest %}
           <div class="field">
             <label for="rsvp-name">Ismingiz</label>
-            <input id="rsvp-name" x-model="name" autocomplete="name"
-                   value="{% if guest %}{{ guest.name }}{% endif %}">
+            <input id="rsvp-name" x-model="name" autocomplete="name">
           </div>
+          {% endif %}
 
           <div class="field">
             <label>Javobingiz</label>
@@ -220,15 +261,12 @@
             </select>
           </div>
 
+          {% if not guest %}
           <div class="field">
             <label for="rsvp-phone">Telefon raqamingiz</label>
             <input id="rsvp-phone" type="tel" x-model="phone" placeholder="+998" autocomplete="tel">
           </div>
-
-          <div class="field">
-            <label for="rsvp-message">Tilagingiz</label>
-            <textarea id="rsvp-message" x-model="message"></textarea>
-          </div>
+          {% endif %}
 
           <button class="btn btn--wide" type="submit" :disabled="sending"
                   x-text="sending ? 'Yuborilmoqda' : 'Javobni yuborish'">Javobni yuborish</button>
@@ -249,13 +287,61 @@
   {% endif %}
 {% endif %}
 
-  {# =============================================== RASM YUKLASH #}
-  {% if w.uploads_open %}
-  <section class="section shell" x-data="uploader()">
-    <h2 class="section-title">Rasmlaringizni qoldiring</h2>
-    {% if w.upload_hint %}
-      <p class="lede" style="margin-bottom:2rem">{{ w.upload_hint|linebreaksbr }}</p>
+  {# =============================================== TILAKLAR #}
+  <section class="section shell appear" x-data="wishWall()">
+    <h2 class="section-title">Tilaklar</h2>
+    <p class="lede" style="margin-bottom:2.25rem">
+      Yosh oilaga bir og'iz yaxshi so'z qoldiring — hammaga ko'rinadi.
+    </p>
+
+    <form @submit.prevent="submit">
+      {% if not guest %}
+      <div class="field">
+        <label for="wish-name">Ismingiz</label>
+        <input id="wish-name" x-model="name" autocomplete="name">
+      </div>
+      {% endif %}
+      <div class="field">
+        <label for="wish-text">Tilagingiz</label>
+        <textarea id="wish-text" x-model="text" maxlength="600"
+                  placeholder="Baxtli bo'linglar…"></textarea>
+      </div>
+      <button class="btn" type="submit" :disabled="sending"
+              x-text="sending ? 'Yuborilmoqda' : 'Tilakni qoldirish'">Tilakni qoldirish</button>
+      <p class="form-error" x-show="error" x-text="error" x-cloak></p>
+    </form>
+
+    <ul class="wishes">
+      <template x-for="wish in fresh" :key="wish.id">
+        <li class="wish--new">
+          <p class="wish__text" x-text="wish.text"></p>
+          <p class="wish__from" x-text="wish.name"></p>
+        </li>
+      </template>
+
+      {% for wish in wishes %}
+        <li>
+          <p class="wish__text">{{ wish.text }}</p>
+          <p class="wish__from">{{ wish.name }}</p>
+        </li>
+      {% endfor %}
+    </ul>
+
+    {% if not wishes %}
+      <p class="wishes-empty" x-show="!fresh.length">
+        Hali tilak yo'q. Birinchi bo'lib siz yozing.
+      </p>
     {% endif %}
+  </section>
+
+  {# =============================================== ESDALIK RASMLARI #}
+  {% if w.uploads_open %}
+  <section class="section shell appear" x-data="uploader()">
+    <h2 class="section-title">Esdalik rasmlarini yuklash</h2>
+    <p class="lede" style="margin-bottom:2.25rem">
+      {% if w.upload_hint %}{{ w.upload_hint|linebreaksbr }}
+      {% else %}O'sha kunda olgan rasm va videolaringizni shu yerga qoldiring.{% endif %}
+    </p>
 
     <div class="field">
       <label for="up-name">Ismingiz</label>
@@ -266,13 +352,22 @@
          @dragover.prevent="dragging = true"
          @dragleave="dragging = false"
          @drop.prevent="dragging = false; addFiles($event.dataTransfer.files)">
-      <p>Telefoningiz galereyasidan tanlang. Rasm va videolar asl sifatida saqlanadi — siqilmaydi.</p>
-      <label class="btn" style="cursor:pointer">
-        Rasm yoki video tanlash
-        <input type="file" multiple style="display:none"
-               accept="image/*,video/*,image/heic,image/heif,.heic,.heif,.mov,.mp4,.m4v,.dng"
-               @change="addFiles($event.target.files); $event.target.value = ''">
-      </label>
+      <p>Rasm va videolar asl sifatida saqlanadi — siqilmaydi.</p>
+
+      <div class="btn-row">
+        <label class="btn" style="cursor:pointer">
+          Galereyadan tanlash
+          <input type="file" multiple style="display:none"
+                 accept="image/*,video/*,image/heic,image/heif,.heic,.heif,.mov,.mp4,.m4v,.dng"
+                 @change="addFiles($event.target.files); $event.target.value = ''">
+        </label>
+
+        <label class="btn btn--ghost" style="cursor:pointer">
+          Hozir rasmga olish
+          <input type="file" accept="image/*" capture="environment" style="display:none"
+                 @change="addFiles($event.target.files); $event.target.value = ''">
+        </label>
+      </div>
     </div>
 
     <p class="form-error" x-show="error" x-text="error" x-cloak></p>
@@ -303,6 +398,8 @@
 
     <p class="form-note">
       Yuklangan fayllarni faqat kuyov va kelin ko'radi, sahifada hech kimga ko'rinmaydi.
+      Kamera bilan olingan rasm telefon kamerasidan pastroq sifatda chiqadi — bor rasmni
+      galereyadan tanlagan ma'qul.
     </p>
   </section>
   {% endif %}

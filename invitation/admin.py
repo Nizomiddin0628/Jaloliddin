@@ -11,7 +11,7 @@ from django.urls import path, reverse
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 
-from .models import GalleryPhoto, Guest, GuestUpload, Rsvp, TimelineEvent, Wedding
+from .models import GalleryPhoto, Guest, GuestUpload, Rsvp, TimelineEvent, Wedding, Wish
 
 
 class TimelineInline(admin.TabularInline):
@@ -244,3 +244,27 @@ class GuestUploadAdmin(admin.ModelAdmin):
         extra_context["browser_url"] = reverse("uploads-browser")
         extra_context["download_all_url"] = reverse("uploads-download-all")
         return super().changelist_view(request, extra_context)
+
+
+@admin.register(Wish)
+class WishAdmin(admin.ModelAdmin):
+    list_display = ["name", "short_text", "is_visible", "created_at"]
+    list_filter = ["is_visible", "created_at"]
+    list_editable = ["is_visible"]
+    search_fields = ["name", "text"]
+    readonly_fields = ["created_at", "guest"]
+    actions = ["hide_wishes", "show_wishes"]
+
+    @admin.display(description="Tilak")
+    def short_text(self, obj):
+        return (obj.text[:90] + "…") if len(obj.text) > 90 else obj.text
+
+    @admin.action(description="Sahifadan yashirish")
+    def hide_wishes(self, request, queryset):
+        count = queryset.update(is_visible=False)
+        self.message_user(request, f"{count} ta tilak yashirildi.")
+
+    @admin.action(description="Sahifada ko'rsatish")
+    def show_wishes(self, request, queryset):
+        count = queryset.update(is_visible=True)
+        self.message_user(request, f"{count} ta tilak ko'rsatildi.")

@@ -243,3 +243,27 @@ class GuestUpload(models.Model):
     @property
     def size_mb(self):
         return round(self.size / (1024 * 1024), 2)
+class Wish(models.Model):
+    """
+    Mehmonlar qoldirgan tilaklar. Sahifada hammaga ko'rinadi.
+    Noo'rin yozuv chiqsa, admin «Ko'rinadi» belgisini olib tashlaydi.
+    """
+
+    wedding = models.ForeignKey(Wedding, related_name="wishes", on_delete=models.CASCADE)
+    guest = models.ForeignKey(
+        Guest, related_name="wishes", on_delete=models.SET_NULL, null=True, blank=True
+    )
+    name = models.CharField("Ism", max_length=120)
+    text = models.TextField("Tilak")
+    is_visible = models.BooleanField(
+        "Ko'rinadi", default=True, help_text="Belgini olsangiz sahifadan yo'qoladi."
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        verbose_name = "Tilak"
+        verbose_name_plural = "Tilaklar"
+
+    def __str__(self):
+        return f"{self.name}: {self.text[:40]}"

@@ -17,6 +17,7 @@ MODEL_PERMS = {
     "guest": ["view", "add", "change", "delete"],
     "rsvp": ["view", "delete"],
     "guestupload": ["view", "delete"],
+    "wish": ["view", "change", "delete"],
 }
 
 

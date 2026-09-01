@@ -1,7 +1,7 @@
 from django.conf import settings
 from rest_framework import serializers
 
-from .models import GalleryPhoto, Guest, GuestUpload, Rsvp, TimelineEvent, Wedding
+from .models import GalleryPhoto, Guest, GuestUpload, Rsvp, TimelineEvent, Wedding, Wish
 
 
 class TimelineEventSerializer(serializers.ModelSerializer):
@@ -110,3 +110,28 @@ class GuestUploadSerializer(serializers.ModelSerializer):
         model = GuestUpload
         fields = ["id", "original_name", "size", "is_video", "created_at"]
         read_only_fields = fields
+class WishSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Wish
+        fields = ["id", "name", "text", "created_at"]
+        read_only_fields = fields
+
+
+class WishCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Wish
+        fields = ["name", "text"]
+
+    def validate_name(self, value):
+        value = value.strip()
+        if len(value) < 2:
+            raise serializers.ValidationError("Ismingizni yozing.")
+        return value
+
+    def validate_text(self, value):
+        value = value.strip()
+        if len(value) < 3:
+            raise serializers.ValidationError("Tilagingizni yozing.")
+        if len(value) > 600:
+            raise serializers.ValidationError("Tilak 600 belgidan oshmasin.")
+        return value

@@ -5,14 +5,57 @@
 
 const CFG = window.TAKLIFNOMA || {};
 
-/** Har bir so'rovga CSRF tokenini qo'shamiz */
-function headers(extra = {}) {
-  return { "X-CSRFToken": CFG.csrfToken, ...extra };
+const REDUCED = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+function headers(extra) {
+  return Object.assign({ "X-CSRFToken": CFG.csrfToken }, extra || {});
 }
 
 function formatSize(bytes) {
   if (bytes < 1024 * 1024) return Math.round(bytes / 1024) + " KB";
   return (bytes / (1024 * 1024)).toFixed(1) + " MB";
+}
+
+function firstError(data) {
+  const key = Object.keys(data || {})[0];
+  if (!key) return null;
+  const val = data[key];
+  return Array.isArray(val) ? val[0] : String(val);
+}
+
+/* ------------------------------------------------- aylantirish animatsiyasi */
+
+/*
+ * Bo'limlar ekranga kirganda bir marta paydo bo'ladi.
+ * Telefonda «harakatni kamaytirish» yoqilgan bo'lsa, hammasi darhol ko'rinadi.
+ */
+function watchScroll() {
+  const targets = document.querySelectorAll(".appear, .band, .timeline");
+
+  if (REDUCED || !("IntersectionObserver" in window)) {
+    targets.forEach((el) => el.classList.add("in"));
+    return;
+  }
+
+  const observer = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add("in");
+          observer.unobserve(entry.target);
+        }
+      });
+    },
+    { threshold: 0.12, rootMargin: "0px 0px -8% 0px" }
+  );
+
+  targets.forEach((el) => observer.observe(el));
+}
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", watchScroll);
+} else {
+  watchScroll();
 }
 
 /* ------------------------------------------------------------ sanoq */
@@ -21,10 +64,13 @@ function countdown() {
   return {
     left: { kun: 0, soat: 0, daqiqa: 0, soniya: 0 },
     done: false,
+    pulse: false,
+
     init() {
       this.tick();
       setInterval(() => this.tick(), 1000);
     },
+
     tick() {
       const ms = new Date(CFG.eventIso).getTime() - Date.now();
       if (ms <= 0) {
@@ -38,7 +84,15 @@ function countdown() {
         daqiqa: Math.floor((ms / 60000) % 60),
         soniya: Math.floor((ms / 1000) % 60),
       };
+      // Soniya raqami almashganda yumshoq harakat
+      if (!REDUCED) {
+        this.pulse = false;
+        requestAnimationFrame(() => {
+          this.pulse = true;
+        });
+      }
     },
+
     pad(n) {
       return String(n).padStart(2, "0");
     },
@@ -49,20 +103,16 @@ function countdown() {
 
 function rsvpForm() {
   return {
-    name: "",
+    // Shaxsiy havola bilan kelgan mehmonning ismi allaqachon ma'lum —
+    // undan qaytadan so'ramaymiz.
+    name: CFG.guestName || "",
     attending: null,
-    seats: "1",
+    seats: String(CFG.guestSeats || 1),
     phone: "",
     message: "",
     sending: false,
     sent: false,
     error: "",
-
-    init() {
-      // Shaxsiy havola bilan kelgan mehmonning ismi allaqachon inputda turadi
-      const input = this.$el.querySelector("#rsvp-name");
-      if (input && input.value) this.name = input.value;
-    },
 
     async submit() {
       this.error = "";
@@ -100,11 +150,48 @@ function rsvpForm() {
   };
 }
 
-function firstError(data) {
-  const key = Object.keys(data || {})[0];
-  if (!key) return null;
-  const val = data[key];
-  return Array.isArray(val) ? val[0] : String(val);
+/* ------------------------------------------------------------ tilaklar */
+
+function wishWall() {
+  return {
+    name: CFG.guestName || "",
+    text: "",
+    sending: false,
+    error: "",
+    fresh: [],
+
+    async submit() {
+      this.error = "";
+      if (this.name.trim().length < 2) {
+        this.error = "Ismingizni yozing.";
+        return;
+      }
+      if (this.text.trim().length < 3) {
+        this.error = "Tilagingizni yozing.";
+        return;
+      }
+      this.sending = true;
+      try {
+        const res = await fetch("/api/wishes/", {
+          method: "POST",
+          headers: headers({ "Content-Type": "application/json" }),
+          body: JSON.stringify({
+            name: this.name.trim(),
+            text: this.text.trim(),
+            guest_code: CFG.guestCode,
+          }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.detail || firstError(data) || "Yuborilmadi.");
+        this.fresh.unshift(data);
+        this.text = "";
+      } catch (e) {
+        this.error = e.message;
+      } finally {
+        this.sending = false;
+      }
+    },
+  };
 }
 
 /* ------------------------------------------------------------ fayl yuklash */
@@ -117,7 +204,13 @@ function firstError(data) {
  */
 function uploader() {
   return {
-    name: localStorage.getItem("toy_yuklovchi_ismi") || "",
+    name: (function () {
+      try {
+        return localStorage.getItem("toy_yuklovchi_ismi") || CFG.guestName || "";
+      } catch (e) {
+        return CFG.guestName || "";
+      }
+    })(),
     items: [],
     queue: [],
     busy: false,
@@ -152,7 +245,7 @@ function uploader() {
         const tooBig = file.size > limit;
         const item = {
           id: this.nextId++,
-          file,
+          file: file,
           name: file.name,
           size: file.size,
           state: tooBig ? "error" : "waiting",
