@@ -1,0 +1,334 @@
+import mimetypes
+import os
+import tempfile
+import zipfile
+from pathlib import Path
+
+from django.conf import settings
+from django.contrib.admin.views.decorators import staff_member_required
+from django.db.models import Count, Sum
+from django.http import FileResponse, Http404, HttpResponse
+from django.shortcuts import get_object_or_404, render
+from django.utils import timezone
+from django.utils.text import slugify
+from rest_framework import status
+from rest_framework.decorators import api_view, throttle_classes
+from rest_framework.response import Response
+from rest_framework.throttling import AnonRateThrottle
+
+from .models import Guest, GuestUpload, Rsvp, Wedding
+from .serializers import GuestSerializer, GuestUploadSerializer, RsvpCreateSerializer, WeddingSerializer
+
+ALLOWED_PREFIXES = ("image/", "video/")
+# iOS ba'zan HEIC/HEIF uchun bo'sh yoki noto'g'ri MIME yuboradi — kengaytma bo'yicha ham tekshiramiz
+ALLOWED_EXTENSIONS = {
+    ".jpg", ".jpeg", ".png", ".heic", ".heif", ".webp", ".gif", ".tiff", ".dng", ".raw",
+    ".mp4", ".mov", ".m4v", ".avi", ".mkv", ".hevc", ".3gp", ".webm",
+}
+VIDEO_EXTENSIONS = {".mp4", ".mov", ".m4v", ".avi", ".mkv", ".hevc", ".3gp", ".webm"}
+
+
+class UploadThrottle(AnonRateThrottle):
+    scope = "upload"
+
+
+class RsvpThrottle(AnonRateThrottle):
+    scope = "rsvp"
+
+
+def get_wedding():
+    wedding = Wedding.objects.filter(is_active=True).prefetch_related("timeline", "gallery").first()
+    if not wedding:
+        raise Http404("To'y sozlamalari hali kiritilmagan.")
+    return wedding
+
+
+# ------------------------------------------------------------------ sahifa
+
+
+def invitation_page(request):
+    """
+    Taklifnoma sahifasi. Matn va rasmlar serverda render qilinadi —
+    shuning uchun sahifa darhol ochiladi va Telegram havola preview'ida
+    haqiqiy ismlar ko'rinadi.
+    """
+    wedding = (
+        Wedding.objects.filter(is_active=True)
+        .prefetch_related("timeline", "gallery")
+        .first()
+    )
+    if not wedding:
+        return render(request, "site/empty.html", status=200)
+
+    code = request.GET.get("g", "").strip()
+    guest = None
+    if code:
+        guest = Guest.objects.filter(wedding=wedding, code__iexact=code).first()
+        if guest:
+            Guest.objects.filter(pk=guest.pk).update(
+                open_count=guest.open_count + 1,
+                opened_at=guest.opened_at or timezone.now(),
+            )
+
+    local = timezone.localtime(wedding.event_at)
+    map_href = wedding.map_url
+    if not map_href and wedding.latitude and wedding.longitude:
+        map_href = (
+            f"https://yandex.uz/maps/?pt={wedding.longitude},"
+            f"{wedding.latitude}&z=17&l=map"
+        )
+
+    return render(
+        request,
+        "site/index.html",
+        {
+            "w": wedding,
+            "guest": guest,
+            "guest_code": code,
+            "timeline": wedding.timeline.all(),
+            "gallery": wedding.gallery.all(),
+            "event_iso": wedding.event_at.isoformat(),
+            "event_date": format_uz_date(local),
+            "event_weekday": UZ_WEEKDAYS[int(local.strftime("%w"))],
+            "event_time": local.strftime("%H:%M"),
+            "map_href": map_href,
+            "max_upload_mb": settings.MAX_UPLOAD_SIZE_MB,
+            "site_url": settings.SITE_URL,
+        },
+    )
+
+
+UZ_MONTHS = [
+    "yanvar", "fevral", "mart", "aprel", "may", "iyun",
+    "iyul", "avgust", "sentabr", "oktabr", "noyabr", "dekabr",
+]
+UZ_WEEKDAYS = [
+    "yakshanba", "dushanba", "seshanba", "chorshanba",
+    "payshanba", "juma", "shanba",
+]
+
+
+def format_uz_date(dt):
+    return f"{dt.day}-{UZ_MONTHS[dt.month - 1]}, {dt.year}"
+
+
+# ------------------------------------------------------------------ ochiq API
+
+
+@api_view(["GET"])
+def wedding_detail(request):
+    """Taklifnomaning barcha ma'lumoti. ?g=KOD bo'lsa mehmon ismi ham qaytadi."""
+    wedding = get_wedding()
+    data = WeddingSerializer(wedding, context={"request": request}).data
+
+    code = request.GET.get("g", "").strip()
+    data["guest"] = None
+    if code:
+        guest = Guest.objects.filter(wedding=wedding, code__iexact=code).first()
+        if guest:
+            data["guest"] = GuestSerializer(guest).data
+            Guest.objects.filter(pk=guest.pk).update(
+                open_count=guest.open_count + 1,
+                opened_at=guest.opened_at or timezone.now(),
+            )
+    return Response(data)
+
+
+@api_view(["POST"])
+@throttle_classes([RsvpThrottle])
+def rsvp_create(request):
+    wedding = get_wedding()
+    if not wedding.rsvp_open:
+        return Response(
+            {"detail": "Javob qabul qilish yopilgan."}, status=status.HTTP_403_FORBIDDEN
+        )
+
+    serializer = RsvpCreateSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
+
+    code = serializer.validated_data.pop("guest_code", "")
+    guest = Guest.objects.filter(wedding=wedding, code__iexact=code).first() if code else None
+
+    if not serializer.validated_data.get("attending"):
+        serializer.validated_data["seats"] = 0
+
+    rsvp = Rsvp.objects.create(wedding=wedding, guest=guest, **serializer.validated_data)
+    return Response(
+        {"ok": True, "id": rsvp.id, "attending": rsvp.attending},
+        status=status.HTTP_201_CREATED,
+    )
+
+
+@api_view(["POST"])
+@throttle_classes([UploadThrottle])
+def upload_create(request):
+    """
+    Bitta faylni qabul qiladi. Fayl asl holida saqlanadi:
+    siqilmaydi, o'lchami o'zgarmaydi, formati aylantirilmaydi.
+    """
+    wedding = get_wedding()
+    if not wedding.uploads_open:
+        return Response(
+            {"detail": "Rasm yuklash hozircha yopiq."}, status=status.HTTP_403_FORBIDDEN
+        )
+
+    upload = request.FILES.get("file")
+    if not upload:
+        return Response({"detail": "Fayl yuborilmadi."}, status=status.HTTP_400_BAD_REQUEST)
+
+    name = (request.data.get("uploader_name") or "").strip()
+    if len(name) < 2:
+        return Response(
+            {"detail": "Ismingizni yozing — rasmlar shu nom bilan saqlanadi."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    ext = os.path.splitext(upload.name)[1].lower()
+    ctype = (upload.content_type or "").lower()
+    type_ok = ctype.startswith(ALLOWED_PREFIXES) or ext in ALLOWED_EXTENSIONS
+    if not type_ok:
+        return Response(
+            {"detail": "Faqat rasm va video yuklash mumkin."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    limit = settings.MAX_UPLOAD_SIZE_MB * 1024 * 1024
+    if upload.size > limit:
+        return Response(
+            {"detail": f"Fayl juda katta. Chegara — {settings.MAX_UPLOAD_SIZE_MB} MB."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    code = (request.data.get("guest_code") or "").strip()
+    guest = Guest.objects.filter(wedding=wedding, code__iexact=code).first() if code else None
+
+    folder = f"{slugify(name)[:24] or 'mehmon'}-{guest.code if guest else 'x'}"
+    already = GuestUpload.objects.filter(wedding=wedding, folder_name=folder).count()
+    if already >= settings.MAX_UPLOADS_PER_GUEST:
+        return Response(
+            {"detail": f"Chegara: {settings.MAX_UPLOADS_PER_GUEST} ta fayl."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    obj = GuestUpload.objects.create(
+        wedding=wedding,
+        guest=guest,
+        uploader_name=name,
+        folder_name=folder,
+        file=upload,
+        original_name=os.path.basename(upload.name)[:255],
+        content_type=ctype[:100],
+        size=upload.size,
+        caption=(request.data.get("caption") or "")[:200],
+        is_video=ext in VIDEO_EXTENSIONS or ctype.startswith("video/"),
+    )
+    return Response(GuestUploadSerializer(obj).data, status=status.HTTP_201_CREATED)
+
+
+# ------------------------------------------------------- admin: ko'rish/yuklash
+
+
+def _safe_open(upload: GuestUpload):
+    path = Path(settings.PRIVATE_MEDIA_ROOT) / upload.file.name
+    root = Path(settings.PRIVATE_MEDIA_ROOT).resolve()
+    if not str(path.resolve()).startswith(str(root)) or not path.exists():
+        raise Http404("Fayl topilmadi.")
+    return path
+
+
+@staff_member_required
+def upload_serve(request, pk):
+    """Faylni brauzerda ko'rsatish (admin uchun oldindan ko'rish)."""
+    upload = get_object_or_404(GuestUpload, pk=pk)
+    path = _safe_open(upload)
+    ctype = upload.content_type or mimetypes.guess_type(upload.original_name)[0]
+    return FileResponse(open(path, "rb"), content_type=ctype or "application/octet-stream")
+
+
+@staff_member_required
+def upload_download(request, pk):
+    """Bitta faylni asl nomi bilan yuklab olish."""
+    upload = get_object_or_404(GuestUpload, pk=pk)
+    path = _safe_open(upload)
+    return FileResponse(
+        open(path, "rb"),
+        as_attachment=True,
+        filename=upload.original_name or path.name,
+    )
+
+
+def _build_zip(uploads, response_name):
+    """Fayllarni papkalarga ajratib zip qiladi: <yuklovchi>/<fayl nomi>"""
+    tmp = tempfile.NamedTemporaryFile(suffix=".zip", delete=False)
+    used = set()
+    with zipfile.ZipFile(tmp, "w", compression=zipfile.ZIP_STORED, allowZip64=True) as zf:
+        for up in uploads:
+            src = Path(settings.PRIVATE_MEDIA_ROOT) / up.file.name
+            if not src.exists():
+                continue
+            base = up.original_name or src.name
+            arcname = f"{up.folder_name}/{base}"
+            counter = 1
+            while arcname in used:
+                stem, ext = os.path.splitext(base)
+                arcname = f"{up.folder_name}/{stem} ({counter}){ext}"
+                counter += 1
+            used.add(arcname)
+            zf.write(src, arcname)
+    tmp.close()
+
+    response = FileResponse(
+        open(tmp.name, "rb"), as_attachment=True, filename=response_name
+    )
+    response._resource_closers.append(lambda: os.unlink(tmp.name))
+    return response
+
+
+@staff_member_required
+def download_folder(request, folder):
+    uploads = GuestUpload.objects.filter(folder_name=folder)
+    if not uploads.exists():
+        raise Http404("Bu papkada fayl yo'q.")
+    return _build_zip(uploads, f"{folder}.zip")
+
+
+@staff_member_required
+def download_all(request):
+    uploads = GuestUpload.objects.all()
+    if not uploads.exists():
+        return HttpResponse("Hali hech kim fayl yuklamagan.", content_type="text/plain")
+    stamp = timezone.localtime().strftime("%Y-%m-%d")
+    return _build_zip(uploads, f"toy-esdaliklari-{stamp}.zip")
+
+
+@staff_member_required
+def uploads_browser(request):
+    """Papka ko'rinishidagi galereya: har bir mehmon — alohida papka."""
+    folders = (
+        GuestUpload.objects.values("folder_name", "uploader_name")
+        .annotate(count=Count("id"), total=Sum("size"))
+        .order_by("-count")
+    )
+    data = []
+    for f in folders:
+        items = GuestUpload.objects.filter(folder_name=f["folder_name"]).order_by("-created_at")
+        data.append(
+            {
+                "folder": f["folder_name"],
+                "name": f["uploader_name"],
+                "count": f["count"],
+                "size_mb": round((f["total"] or 0) / (1024 * 1024), 1),
+                "items": items,
+            }
+        )
+    total_size = GuestUpload.objects.aggregate(s=Sum("size"))["s"] or 0
+    return render(
+        request,
+        "admin/uploads_browser.html",
+        {
+            "folders": data,
+            "total_files": GuestUpload.objects.count(),
+            "total_size_mb": round(total_size / (1024 * 1024), 1),
+            "title": "Mehmonlar yuklagan esdaliklar",
+        },
+    )

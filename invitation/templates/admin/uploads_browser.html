@@ -1,0 +1,59 @@
+{% extends "admin/base_site.html" %}
+{% block content %}
+<style>
+  .ub-head{display:flex;align-items:baseline;gap:20px;flex-wrap:wrap;margin-bottom:24px}
+  .ub-head p{color:#666;margin:0}
+  .ub-btn{display:inline-block;background:#417690;color:#fff;padding:9px 16px;
+          border-radius:4px;text-decoration:none;font-weight:600}
+  .ub-btn:hover{background:#2f5670;color:#fff}
+  .ub-folder{border:1px solid #e0e0e0;border-radius:6px;margin-bottom:22px;background:#fff}
+  .ub-folder header{display:flex;justify-content:space-between;align-items:center;
+          gap:16px;padding:13px 18px;border-bottom:1px solid #eee;flex-wrap:wrap}
+  .ub-folder h2{margin:0;font-size:16px}
+  .ub-folder .meta{color:#888;font-size:13px;font-weight:400;margin-left:8px}
+  .ub-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));
+          gap:12px;padding:18px}
+  .ub-item{position:relative;border-radius:4px;overflow:hidden;background:#f4f4f4}
+  .ub-item img,.ub-item video{width:100%;height:120px;object-fit:cover;display:block}
+  .ub-item .dl{display:block;text-align:center;padding:6px;font-size:12px;
+          background:#fafafa;text-decoration:none;border-top:1px solid #eee}
+  .ub-item .nm{font-size:11px;color:#777;padding:4px 6px 0;word-break:break-all;
+          white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .ub-empty{padding:40px;text-align:center;color:#888}
+</style>
+
+<div class="ub-head">
+  <h1 style="margin:0">Esdaliklar</h1>
+  <p>{{ total_files }} ta fayl · {{ total_size_mb }} MB</p>
+  {% if total_files %}
+    <a class="ub-btn" href="{% url 'uploads-download-all' %}">Hammasini ZIP qilib olish</a>
+  {% endif %}
+</div>
+
+{% for f in folders %}
+  <section class="ub-folder">
+    <header>
+      <h2>{{ f.name }}<span class="meta">{{ f.count }} ta fayl · {{ f.size_mb }} MB</span></h2>
+      <a class="ub-btn" href="{% url 'uploads-download-folder' f.folder %}">Bu papkani olish</a>
+    </header>
+    <div class="ub-grid">
+      {% for item in f.items %}
+        <div class="ub-item">
+          {% if item.is_video %}
+            <video src="{% url 'upload-serve' item.pk %}" controls preload="metadata"></video>
+          {% else %}
+            <img src="{% url 'upload-serve' item.pk %}" loading="lazy" alt="">
+          {% endif %}
+          <div class="nm" title="{{ item.original_name }}">{{ item.original_name }}</div>
+          <a class="dl" href="{% url 'upload-download' item.pk %}">Yuklab olish</a>
+        </div>
+      {% endfor %}
+    </div>
+  </section>
+{% empty %}
+  <div class="ub-empty">
+    Hali hech kim rasm yuklamagan. Rasm yuklash ochiqligini
+    «To'y sozlamalari» bo'limidan tekshiring.
+  </div>
+{% endfor %}
+{% endblock %}

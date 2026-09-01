@@ -1,0 +1,707 @@
+/* ==========================================================================
+   Dizayn tizimi
+   Rang:  issiq qog'oz fon, quyuq siyoh matn, bitta zaytun akssent
+   Shrift: Cormorant Garamond (sarlavha) + Karla (matn va tugmalar)
+   Tuzilish: tor bitta ustun, chapga tekislangan
+   ========================================================================== */
+
+:root {
+  --paper: #f5f1e6;
+  --paper-deep: #ece5d4;
+  --ink: #1c1a15;
+  --ink-soft: #4a463c;
+  --muted: #7c7566;
+  --rule: #d5ccb8;
+  --olive: #55603c;
+  --olive-deep: #3d4629;
+  --white: #fdfcf8;
+
+  --measure: 34rem;
+  --gap: clamp(3.5rem, 9vw, 6.5rem);
+
+  --display: "Cormorant Garamond", Georgia, "Times New Roman", serif;
+  --body: "Karla", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--body);
+  font-size: 16px;
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+img,
+video {
+  max-width: 100%;
+  display: block;
+}
+
+a {
+  color: var(--olive-deep);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+:focus-visible {
+  outline: 2px solid var(--olive);
+  outline-offset: 3px;
+}
+
+/* ------------------------------------------------------------------ tuzilish */
+
+.shell {
+  max-width: var(--measure);
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+
+.section {
+  padding-block: var(--gap);
+}
+
+.section + .section {
+  padding-top: 0;
+}
+
+.section-title {
+  font-family: var(--display);
+  font-weight: 300;
+  font-size: clamp(1.75rem, 5vw, 2.35rem);
+  line-height: 1.1;
+  margin: 0 0 1.5rem;
+  letter-spacing: -0.01em;
+}
+
+.lede {
+  font-family: var(--display);
+  font-size: clamp(1.3rem, 4vw, 1.6rem);
+  font-weight: 300;
+  line-height: 1.5;
+  color: var(--ink-soft);
+  margin: 0;
+}
+
+.rule {
+  height: 1px;
+  background: var(--rule);
+  border: 0;
+  margin: 0;
+}
+
+/* ------------------------------------------------------------------ hero */
+
+.hero {
+  position: relative;
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 2rem 1.5rem 3rem;
+  overflow: hidden;
+}
+
+.hero__image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 0;
+}
+
+.hero__veil {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: linear-gradient(
+    to top,
+    rgba(20, 18, 13, 0.78) 0%,
+    rgba(20, 18, 13, 0.32) 45%,
+    rgba(20, 18, 13, 0.12) 100%
+  );
+}
+
+.hero--plain .hero__veil {
+  background: none;
+}
+
+.hero__inner {
+  position: relative;
+  z-index: 2;
+  max-width: var(--measure);
+  margin: 0 auto;
+  width: 100%;
+}
+
+.hero--photo .hero__inner {
+  color: var(--white);
+}
+
+.hero__greeting {
+  font-size: 0.9rem;
+  letter-spacing: 0.02em;
+  margin: 0 0 1.75rem;
+  color: inherit;
+  opacity: 0.85;
+}
+
+.hero__names {
+  font-family: var(--display);
+  font-weight: 300;
+  font-size: clamp(3.6rem, 17vw, 6.5rem);
+  line-height: 0.92;
+  margin: 0;
+  letter-spacing: -0.025em;
+}
+
+.hero__amp {
+  display: block;
+  font-style: italic;
+  font-size: 0.42em;
+  line-height: 1;
+  margin: 0.28em 0 0.22em 0.06em;
+  color: var(--olive);
+}
+
+.hero--photo .hero__amp {
+  color: #cbd3ac;
+}
+
+.hero__meta {
+  margin: 2rem 0 0;
+  padding-top: 1.25rem;
+  border-top: 1px solid currentColor;
+  display: flex;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  font-size: 0.95rem;
+  opacity: 0.9;
+}
+
+.hero__meta span {
+  border-color: currentColor;
+}
+
+/* Sahifa ochilganda bir marta ishlaydigan yagona animatsiya */
+.reveal > * {
+  opacity: 0;
+  transform: translateY(14px);
+  animation: rise 0.85s cubic-bezier(0.2, 0.7, 0.3, 1) forwards;
+}
+
+.reveal > *:nth-child(1) { animation-delay: 0.15s; }
+.reveal > *:nth-child(2) { animation-delay: 0.3s; }
+.reveal > *:nth-child(3) { animation-delay: 0.55s; }
+
+@keyframes rise {
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ------------------------------------------------------------------ countdown */
+
+.countdown {
+  display: flex;
+  gap: 1.75rem;
+  padding-block: 1.6rem;
+  border-top: 1px solid var(--rule);
+  border-bottom: 1px solid var(--rule);
+  font-variant-numeric: tabular-nums;
+}
+
+.countdown__unit {
+  display: flex;
+  flex-direction: column;
+}
+
+.countdown__num {
+  font-family: var(--display);
+  font-size: clamp(2rem, 8vw, 2.7rem);
+  font-weight: 300;
+  line-height: 1;
+}
+
+.countdown__label {
+  font-size: 0.78rem;
+  color: var(--muted);
+  margin-top: 0.35rem;
+}
+
+.countdown__done {
+  font-family: var(--display);
+  font-size: 1.5rem;
+  font-weight: 300;
+  margin: 0;
+}
+
+/* ------------------------------------------------------------------ timeline */
+
+.timeline {
+  list-style: none;
+  margin: 0;
+  padding: 0 0 0 1.75rem;
+  border-left: 1px solid var(--rule);
+}
+
+.timeline li {
+  position: relative;
+  padding-bottom: 2.5rem;
+}
+
+.timeline li:last-child {
+  padding-bottom: 0;
+}
+
+.timeline li::before {
+  content: "";
+  position: absolute;
+  left: calc(-1.75rem - 3.5px);
+  top: 0.6rem;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--olive);
+}
+
+.timeline__date {
+  font-size: 0.8rem;
+  color: var(--muted);
+  display: block;
+  margin-bottom: 0.15rem;
+}
+
+.timeline__title {
+  font-family: var(--display);
+  font-size: 1.4rem;
+  font-weight: 400;
+  margin: 0 0 0.3rem;
+}
+
+.timeline__text {
+  margin: 0;
+  color: var(--ink-soft);
+}
+
+/* ------------------------------------------------------------------ galereya */
+
+.gallery {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.6rem;
+}
+
+.gallery__item {
+  padding: 0;
+  border: 0;
+  background: var(--paper-deep);
+  cursor: pointer;
+  overflow: hidden;
+  aspect-ratio: 3 / 4;
+}
+
+.gallery__item:first-child {
+  grid-column: span 2;
+  aspect-ratio: 4 / 3;
+}
+
+.gallery__item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  background: rgba(18, 16, 11, 0.94);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  border: 0;
+}
+
+.lightbox img {
+  max-width: 100%;
+  max-height: 88svh;
+  object-fit: contain;
+}
+
+.lightbox__close {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: none;
+  border: 0;
+  color: var(--white);
+  font-size: 2rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0.5rem;
+}
+
+/* ------------------------------------------------------------------ tafsilot */
+
+.facts {
+  margin: 0;
+}
+
+.facts > div {
+  display: flex;
+  gap: 1.25rem;
+  padding-block: 1rem;
+  border-bottom: 1px solid var(--rule);
+}
+
+.facts > div:first-child {
+  border-top: 1px solid var(--rule);
+}
+
+.facts dt {
+  flex: 0 0 6.5rem;
+  color: var(--muted);
+  font-size: 0.88rem;
+  padding-top: 0.12rem;
+}
+
+.facts dd {
+  margin: 0;
+  flex: 1;
+}
+
+.facts strong {
+  font-weight: 600;
+}
+
+/* ------------------------------------------------------------------ tugmalar */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-family: var(--body);
+  font-size: 0.98rem;
+  font-weight: 600;
+  padding: 0.85rem 1.5rem;
+  background: var(--olive);
+  color: var(--white);
+  border: 1px solid var(--olive);
+  border-radius: 2px;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 0.18s ease;
+}
+
+.btn:hover:not(:disabled) {
+  background: var(--olive-deep);
+  color: var(--white);
+}
+
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.btn--ghost {
+  background: transparent;
+  color: var(--ink);
+  border-color: var(--ink);
+}
+
+.btn--ghost:hover:not(:disabled) {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.btn--wide {
+  width: 100%;
+}
+
+/* ------------------------------------------------------------------ forma */
+
+.field {
+  margin-bottom: 1.25rem;
+}
+
+.field label {
+  display: block;
+  font-size: 0.88rem;
+  color: var(--muted);
+  margin-bottom: 0.4rem;
+}
+
+.field input,
+.field textarea,
+.field select {
+  width: 100%;
+  font-family: var(--body);
+  font-size: 1rem;
+  padding: 0.75rem 0.85rem;
+  background: var(--white);
+  color: var(--ink);
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+}
+
+.field input:focus,
+.field textarea:focus,
+.field select:focus {
+  border-color: var(--olive);
+  outline: none;
+}
+
+.field textarea {
+  resize: vertical;
+  min-height: 5.5rem;
+}
+
+.choice {
+  display: flex;
+  gap: 0.6rem;
+}
+
+.choice button {
+  flex: 1;
+  font-family: var(--body);
+  font-size: 0.95rem;
+  padding: 0.8rem 0.5rem;
+  background: var(--white);
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+  cursor: pointer;
+  color: var(--ink-soft);
+}
+
+.choice button[aria-pressed="true"] {
+  background: var(--olive);
+  border-color: var(--olive);
+  color: var(--white);
+  font-weight: 600;
+}
+
+.form-note {
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin: 0.75rem 0 0;
+}
+
+.form-error {
+  color: #8f3626;
+  font-size: 0.9rem;
+  margin: 0.75rem 0 0;
+}
+
+.done {
+  border: 1px solid var(--rule);
+  border-left: 3px solid var(--olive);
+  padding: 1.5rem;
+  background: var(--white);
+}
+
+.done h3 {
+  font-family: var(--display);
+  font-weight: 400;
+  font-size: 1.5rem;
+  margin: 0 0 0.4rem;
+}
+
+.done p {
+  margin: 0;
+  color: var(--ink-soft);
+}
+
+/* ------------------------------------------------------------------ yuklash */
+
+.drop {
+  border: 1px dashed var(--rule);
+  background: var(--white);
+  padding: 2.25rem 1.5rem;
+  text-align: center;
+}
+
+.drop--over {
+  border-color: var(--olive);
+  background: var(--paper-deep);
+}
+
+.drop p {
+  margin: 0 0 1.15rem;
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.queue {
+  list-style: none;
+  margin: 1.5rem 0 0;
+  padding: 0;
+}
+
+.queue li {
+  padding: 0.7rem 0;
+  border-bottom: 1px solid var(--rule);
+  font-size: 0.9rem;
+}
+
+.queue__row {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: baseline;
+}
+
+.queue__name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.queue__state {
+  flex-shrink: 0;
+  font-size: 0.82rem;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.queue__state--ok {
+  color: var(--olive);
+}
+
+.queue__state--err {
+  color: #8f3626;
+}
+
+.bar {
+  height: 2px;
+  background: var(--rule);
+  margin-top: 0.5rem;
+}
+
+.bar span {
+  display: block;
+  height: 100%;
+  background: var(--olive);
+  transition: width 0.25s ease;
+}
+
+/* ------------------------------------------------------------------ musiqa */
+
+.music {
+  position: fixed;
+  right: 1rem;
+  bottom: 1rem;
+  z-index: 60;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: 1px solid var(--rule);
+  background: var(--white);
+  color: var(--ink-soft);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 2px 10px rgba(28, 26, 21, 0.12);
+}
+
+/* ------------------------------------------------------------------ footer */
+
+.footer {
+  padding: var(--gap) 1.5rem calc(var(--gap) / 1.6);
+  border-top: 1px solid var(--rule);
+  text-align: left;
+}
+
+.footer__inner {
+  max-width: var(--measure);
+  margin: 0 auto;
+}
+
+.footer__names {
+  font-family: var(--display);
+  font-weight: 300;
+  font-size: 2rem;
+  margin: 0 0 0.5rem;
+}
+
+.footer p {
+  margin: 0 0 0.35rem;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.footer a {
+  color: var(--ink-soft);
+}
+
+/* ------------------------------------------------------------------ holatlar */
+
+.screen {
+  min-height: 100svh;
+  display: grid;
+  place-items: center;
+  padding: 2rem;
+  text-align: center;
+}
+
+.screen p {
+  font-family: var(--display);
+  font-size: 1.35rem;
+  font-weight: 300;
+  color: var(--muted);
+  max-width: 26rem;
+}
+
+/* ------------------------------------------------------------------ moslashuv */
+
+@media (min-width: 40rem) {
+  .gallery {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .gallery__item:first-child {
+    grid-column: span 3;
+    aspect-ratio: 16 / 9;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal > * {
+    opacity: 1;
+    transform: none;
+    animation: none;
+  }
+  * {
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ------------------------------------------------------------------ Alpine */
+
+/* Alpine yuklanmaguncha shartli bloklar ko'rinmasin */
+[x-cloak] {
+  display: none !important;
+}
+
+.hero__names--short {
+  font-size: clamp(2.6rem, 11vw, 4.4rem);
+}
+
+.hero__meta--block {
+  display: block;
+}
