@@ -29,6 +29,7 @@
       guestName: "{% if guest %}{{ guest.name|escapejs }}{% endif %}",
       guestSeats: {% if guest %}{{ guest.seats }}{% else %}1{% endif %},
       maxUploadMb: {{ max_upload_mb }},
+      wishes: {{ wishes_json|safe }},
       csrfToken: "{{ csrf_token }}"
     };
   </script>
@@ -115,9 +116,23 @@
     {% endif %}
   </section>
 
-  {# =============================================== KENG RASM #}
-  {% if band_one %}
-    <div class="band"><img src="{{ band_one.image.url }}" alt="" loading="lazy"></div>
+  {# =============================================== ALMASHIB TURUVCHI RASMLAR #}
+  {% if gallery %}
+  <div class="slideshow" x-data="slideshow()">
+    {% for p in gallery %}
+      <img src="{{ p.image.url }}" alt="{{ p.caption }}"
+           :class="{ 'is-active': index === {{ forloop.counter0 }} }"
+           class="{% if forloop.first %}is-active{% endif %}"
+           loading="{% if forloop.first %}eager{% else %}lazy{% endif %}">
+    {% endfor %}
+    <div class="slideshow__dots">
+      {% for p in gallery %}
+        <button type="button" @click="go({{ forloop.counter0 }})"
+                :class="{ 'is-active': index === {{ forloop.counter0 }} }"
+                aria-label="{{ forloop.counter }}-rasm"></button>
+      {% endfor %}
+    </div>
+  </div>
   {% endif %}
 
   {# =============================================== SEVGI TARIXI #}
@@ -162,10 +177,6 @@
 
 {% if w.mode != 'thanks' %}
 
-  {# =============================================== KENG RASM #}
-  {% if band_two %}
-    <div class="band"><img src="{{ band_two.image.url }}" alt="" loading="lazy"></div>
-  {% endif %}
 
   {# =============================================== MAROSIM VA XARITA #}
   <section class="section shell appear">
@@ -311,27 +322,25 @@
       <p class="form-error" x-show="error" x-text="error" x-cloak></p>
     </form>
 
-    <ul class="wishes">
-      <template x-for="wish in fresh" :key="wish.id">
-        <li class="wish--new">
-          <p class="wish__text" x-text="wish.text"></p>
-          <p class="wish__from" x-text="wish.name"></p>
-        </li>
+    <div class="rotator" x-show="all.length" x-cloak
+         @mouseenter="pause()" @mouseleave="resume()">
+      <template x-for="(wish, i) in all" :key="wish.id">
+        <blockquote class="rotator__card" :class="{ 'is-active': i === index }">
+          <p class="rotator__text" x-text="wish.text"></p>
+          <footer class="rotator__from" x-text="wish.name"></footer>
+        </blockquote>
       </template>
 
-      {% for wish in wishes %}
-        <li>
-          <p class="wish__text">{{ wish.text }}</p>
-          <p class="wish__from">{{ wish.name }}</p>
-        </li>
-      {% endfor %}
-    </ul>
+      <div class="rotator__nav" x-show="all.length > 1">
+        <button type="button" @click="prev()" aria-label="Oldingi tilak">&larr;</button>
+        <span class="rotator__count" x-text="(index + 1) + ' / ' + all.length"></span>
+        <button type="button" @click="next()" aria-label="Keyingi tilak">&rarr;</button>
+      </div>
+    </div>
 
-    {% if not wishes %}
-      <p class="wishes-empty" x-show="!fresh.length">
-        Hali tilak yo'q. Birinchi bo'lib siz yozing.
-      </p>
-    {% endif %}
+    <p class="wishes-empty" x-show="!all.length" x-cloak>
+      Hali tilak yo'q. Birinchi bo'lib siz yozing.
+    </p>
   </section>
 
   {# =============================================== ESDALIK RASMLARI #}
@@ -362,11 +371,23 @@
                  @change="addFiles($event.target.files); $event.target.value = ''">
         </label>
 
-        <label class="btn btn--ghost" style="cursor:pointer">
+        <button type="button" class="btn btn--ghost" @click="openCamera()">
           Hozir rasmga olish
-          <input type="file" accept="image/*" capture="environment" style="display:none"
-                 @change="addFiles($event.target.files); $event.target.value = ''">
-        </label>
+        </button>
+      </div>
+    </div>
+
+    {# Kamera oynasi #}
+    <div class="cam" x-show="camOpen" x-cloak role="dialog" aria-modal="true">
+      <div class="cam__inner">
+        <video x-ref="cam" playsinline muted x-show="!camError"></video>
+
+        <p class="cam__error" x-show="camError" x-text="camError"></p>
+
+        <div class="cam__bar">
+          <button type="button" class="btn btn--ghost" @click="closeCamera()">Yopish</button>
+          <button type="button" class="btn" @click="shoot()" x-show="!camError">Rasmga olish</button>
+        </div>
       </div>
     </div>
 
@@ -426,7 +447,7 @@
 {# =============================================== MUSIQA #}
 {% if w.music %}
 <div x-data="musicPlayer()">
-  <audio x-ref="audio" src="{{ w.music.url }}" loop preload="none"></audio>
+  <audio x-ref="audio" src="{{ w.music.url }}" loop preload="auto"></audio>
   <button class="music" @click="toggle" :aria-pressed="playing"
           :aria-label="playing ? 'Musiqani o`chirish' : 'Musiqani yoqish'"
           x-text="playing ? '❚❚' : '♪'">♪</button>

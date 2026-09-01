@@ -1,8 +1,10 @@
+import json
 import mimetypes
 import os
 import tempfile
 import zipfile
 from pathlib import Path
+from urllib.parse import quote
 
 from django.conf import settings
 from django.contrib.admin.views.decorators import staff_member_required
@@ -79,29 +81,28 @@ def invitation_page(request):
 
     local = timezone.localtime(wedding.event_at)
     has_point = wedding.latitude is not None and wedding.longitude is not None
+    place_text = f"{wedding.venue_name} {wedding.venue_address}".strip()
 
-    # Navigatorda ochish uchun havola
-    map_href = wedding.map_url
-    if not map_href and has_point:
-        map_href = (
-            f"https://yandex.uz/maps/?pt={wedding.longitude},"
-            f"{wedding.latitude}&z=17&l=map"
-        )
-
-    # Sahifaga o'rnatiladigan xarita (OpenStreetMap, API kaliti kerak emas)
-    map_embed = None
+    # Google Maps — API kaliti kerak emas.
+    # Koordinata bo'lsa aynan o'sha nuqta, bo'lmasa manzil matni bo'yicha.
     if has_point:
-        lat, lon = wedding.latitude, wedding.longitude
-        d_lat, d_lon = 0.0035, 0.006
-        map_embed = (
-            "https://www.openstreetmap.org/export/embed.html"
-            f"?bbox={lon - d_lon}%2C{lat - d_lat}%2C{lon + d_lon}%2C{lat + d_lat}"
-            f"&layer=mapnik&marker={lat}%2C{lon}"
+        point = f"{wedding.latitude},{wedding.longitude}"
+        map_embed = f"https://www.google.com/maps?q={point}&hl=uz&z=17&output=embed"
+        map_href = wedding.map_url or (
+            f"https://www.google.com/maps/search/?api=1&query={point}"
         )
+    elif place_text:
+        query = quote(place_text)
+        map_embed = f"https://www.google.com/maps?q={query}&hl=uz&z=15&output=embed"
+        map_href = wedding.map_url or (
+            f"https://www.google.com/maps/search/?api=1&query={query}"
+        )
+    else:
+        map_embed = None
+        map_href = wedding.map_url
 
-    # Bo'limlar orasida kenglikni to'la egallaydigan rasmlar
     photos = list(wedding.gallery.all())
-    bands = photos[1:3]
+    wish_list = list(wedding.wishes.filter(is_visible=True)[:50])
 
     return render(
         request,
@@ -112,9 +113,11 @@ def invitation_page(request):
             "guest_code": code,
             "timeline": wedding.timeline.all(),
             "gallery": photos,
-            "band_one": bands[0] if len(bands) > 0 else None,
-            "band_two": bands[1] if len(bands) > 1 else None,
-            "wishes": wedding.wishes.filter(is_visible=True)[:50],
+            "wishes": wish_list,
+            "wishes_json": json.dumps(
+                [{"id": x.id, "name": x.name, "text": x.text} for x in wish_list],
+                ensure_ascii=False,
+            ),
             "event_iso": wedding.event_at.isoformat(),
             "event_date": format_uz_date(local),
             "event_weekday": UZ_WEEKDAYS[int(local.strftime("%w"))],

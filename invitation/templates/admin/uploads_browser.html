@@ -1,29 +1,149 @@
 {% extends "admin/base_site.html" %}
 {% block content %}
 <style>
-  .ub-head{display:flex;align-items:baseline;gap:20px;flex-wrap:wrap;margin-bottom:24px}
-  .ub-head p{color:#666;margin:0}
-  .ub-btn{display:inline-block;background:#417690;color:#fff;padding:9px 16px;
-          border-radius:4px;text-decoration:none;font-weight:600}
-  .ub-btn:hover{background:#2f5670;color:#fff}
-  .ub-folder{border:1px solid #e0e0e0;border-radius:6px;margin-bottom:22px;background:#fff}
-  .ub-folder header{display:flex;justify-content:space-between;align-items:center;
-          gap:16px;padding:13px 18px;border-bottom:1px solid #eee;flex-wrap:wrap}
-  .ub-folder h2{margin:0;font-size:16px}
-  .ub-folder .meta{color:#888;font-size:13px;font-weight:400;margin-left:8px}
-  .ub-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));
-          gap:12px;padding:18px}
-  .ub-item{position:relative;border-radius:4px;overflow:hidden;background:#f4f4f4}
-  .ub-item img,.ub-item video{width:100%;height:120px;object-fit:cover;display:block}
-  .ub-item .dl{display:block;text-align:center;padding:6px;font-size:12px;
-          background:#fafafa;text-decoration:none;border-top:1px solid #eee}
-  .ub-item .nm{font-size:11px;color:#777;padding:4px 6px 0;word-break:break-all;
-          white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .ub-empty{padding:40px;text-align:center;color:#888}
+  /* Django admin o'z havola ranglarini majburlaydi, shuning uchun
+     tugma qoidalari a:link/a:visited darajasida yoziladi. */
+  .ub-btn,
+  a.ub-btn:link,
+  a.ub-btn:visited {
+    display: inline-block;
+    background: #2f6b4f;
+    color: #fff;
+    padding: 9px 16px;
+    border-radius: 4px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 13px;
+    line-height: 1.2;
+    border: 0;
+  }
+  .ub-btn:hover,
+  a.ub-btn:hover,
+  a.ub-btn:focus {
+    background: #24523c;
+    color: #fff;
+    text-decoration: none;
+  }
+
+  .ub-head {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap;
+    margin-bottom: 24px;
+  }
+  .ub-head h1 { margin: 0; }
+  .ub-head p { color: #666; margin: 0; }
+
+  .ub-folder {
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    margin-bottom: 22px;
+    background: #fff;
+  }
+  .ub-folder header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    padding: 13px 18px;
+    border-bottom: 1px solid #eee;
+    flex-wrap: wrap;
+  }
+  .ub-folder h2 { margin: 0; font-size: 16px; }
+  .ub-folder .meta {
+    color: #888;
+    font-size: 13px;
+    font-weight: 400;
+    margin-left: 8px;
+  }
+
+  .ub-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 14px;
+    padding: 18px;
+  }
+  .ub-item {
+    border: 1px solid #e6e6e6;
+    border-radius: 4px;
+    overflow: hidden;
+    background: #fafafa;
+  }
+  /* Rasmning o'zi bosiladi — kattalashib ochiladi */
+  .ub-open {
+    display: block;
+    cursor: zoom-in;
+    border: 0;
+    padding: 0;
+    width: 100%;
+    background: #eee;
+  }
+  .ub-open img,
+  .ub-open video {
+    width: 100%;
+    height: 130px;
+    object-fit: cover;
+    display: block;
+  }
+  .ub-item .nm {
+    font-size: 11px;
+    color: #666;
+    padding: 6px 8px 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .ub-item .dl,
+  .ub-item a.dl:link,
+  .ub-item a.dl:visited {
+    display: block;
+    text-align: center;
+    padding: 7px;
+    font-size: 12px;
+    color: #2f6b4f;
+    background: #f4f4f4;
+    text-decoration: none;
+    border-top: 1px solid #eee;
+    margin-top: 6px;
+  }
+  .ub-item a.dl:hover { background: #e9efe9; text-decoration: underline; }
+
+  .ub-empty { padding: 40px; text-align: center; color: #888; }
+
+  /* Kattalashtirilgan ko'rinish */
+  #ub-box {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    background: rgba(0, 0, 0, 0.9);
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+  #ub-box.on { display: flex; }
+  #ub-box img,
+  #ub-box video {
+    max-width: 100%;
+    max-height: 88vh;
+    object-fit: contain;
+  }
+  #ub-close {
+    position: absolute;
+    top: 12px;
+    right: 18px;
+    font-size: 34px;
+    line-height: 1;
+    color: #fff;
+    background: none;
+    border: 0;
+    cursor: pointer;
+  }
 </style>
 
 <div class="ub-head">
-  <h1 style="margin:0">Esdaliklar</h1>
+  <h1>Esdaliklar</h1>
   <p>{{ total_files }} ta fayl · {{ total_size_mb }} MB</p>
   {% if total_files %}
     <a class="ub-btn" href="{% url 'uploads-download-all' %}">Hammasini ZIP qilib olish</a>
@@ -39,11 +159,16 @@
     <div class="ub-grid">
       {% for item in f.items %}
         <div class="ub-item">
-          {% if item.is_video %}
-            <video src="{% url 'upload-serve' item.pk %}" controls preload="metadata"></video>
-          {% else %}
-            <img src="{% url 'upload-serve' item.pk %}" loading="lazy" alt="">
-          {% endif %}
+          <button type="button" class="ub-open"
+                  data-src="{% url 'upload-serve' item.pk %}"
+                  data-video="{% if item.is_video %}1{% else %}0{% endif %}"
+                  title="Kattalashtirish">
+            {% if item.is_video %}
+              <video src="{% url 'upload-serve' item.pk %}" preload="metadata" muted></video>
+            {% else %}
+              <img src="{% url 'upload-serve' item.pk %}" loading="lazy" alt="">
+            {% endif %}
+          </button>
           <div class="nm" title="{{ item.original_name }}">{{ item.original_name }}</div>
           <a class="dl" href="{% url 'upload-download' item.pk %}">Yuklab olish</a>
         </div>
@@ -56,4 +181,42 @@
     «To'y sozlamalari» bo'limidan tekshiring.
   </div>
 {% endfor %}
+
+<div id="ub-box">
+  <button type="button" id="ub-close" aria-label="Yopish">&times;</button>
+  <span id="ub-slot"></span>
+</div>
+
+<script>
+(function () {
+  var box = document.getElementById("ub-box");
+  var slot = document.getElementById("ub-slot");
+
+  function open(src, isVideo) {
+    slot.innerHTML = isVideo
+      ? '<video src="' + src + '" controls autoplay playsinline></video>'
+      : '<img src="' + src + '" alt="">';
+    box.classList.add("on");
+  }
+
+  function close() {
+    box.classList.remove("on");
+    slot.innerHTML = "";
+  }
+
+  document.querySelectorAll(".ub-open").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      open(btn.dataset.src, btn.dataset.video === "1");
+    });
+  });
+
+  document.getElementById("ub-close").addEventListener("click", close);
+  box.addEventListener("click", function (e) {
+    if (e.target === box) close();
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") close();
+  });
+})();
+</script>
 {% endblock %}
