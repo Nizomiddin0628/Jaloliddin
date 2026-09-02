@@ -36,6 +36,11 @@
 </head>
 <body>
 
+{# Faqat admin ko'radi — mehmonga bu panel ko'rinmaydi #}
+{% if user.is_staff %}
+  <a class="adminbar" href="{% url 'admin:index' %}">Boshqaruv paneli</a>
+{% endif %}
+
 {# =============================================== BOSH EKRAN #}
 <header class="hero {% if w.hero_image %}hero--photo{% else %}hero--plain{% endif %}">
   {% if w.hero_image %}

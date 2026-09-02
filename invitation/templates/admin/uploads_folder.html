@@ -1,0 +1,85 @@
+{% extends "admin/base_site.html" %}
+{% block content %}
+{% include "admin/_wedding_ui.html" %}
+
+<div class="wui-wrap">
+  <a class="wui-back" href="{% url 'uploads-browser' %}">&larr; Hamma kishilar</a>
+
+  <div class="wui-head">
+    <h1>{{ name }}</h1>
+    <a class="wui-btn" href="{% url 'uploads-download-folder' folder %}">
+      Shu kishining fayllarini ZIP qilib olish
+    </a>
+  </div>
+  <p class="wui-sub">
+    {{ count }} ta fayl · {{ size_mb }} MB · birinchi yuklagan {{ first_at|date:"d.m.Y H:i" }}.
+    Rasmni bosing — kattalashib ochiladi.
+  </p>
+
+  <div class="wui-grid">
+    {% for item in items %}
+      <div class="wui-item">
+        <button type="button" class="wui-open"
+                data-src="{% url 'upload-serve' item.pk %}"
+                data-video="{% if item.is_video %}1{% else %}0{% endif %}"
+                title="Kattalashtirish">
+          {% if item.is_video %}
+            <video src="{% url 'upload-serve' item.pk %}" preload="metadata" muted></video>
+          {% else %}
+            <img src="{% url 'upload-serve' item.pk %}" loading="lazy" alt="">
+          {% endif %}
+        </button>
+        <div class="wui-item__nm" title="{{ item.original_name }}">{{ item.original_name }}</div>
+        <a class="wui-item__dl" href="{% url 'upload-download' item.pk %}">Yuklab olish</a>
+      </div>
+    {% endfor %}
+  </div>
+</div>
+
+<div id="wui-box">
+  <button type="button" id="wui-close" aria-label="Yopish">&times;</button>
+  <button type="button" id="wui-prev" aria-label="Oldingi">&lsaquo;</button>
+  <span id="wui-slot"></span>
+  <button type="button" id="wui-next" aria-label="Keyingi">&rsaquo;</button>
+</div>
+
+<script>
+(function () {
+  var box = document.getElementById("wui-box");
+  var slot = document.getElementById("wui-slot");
+  var buttons = Array.prototype.slice.call(document.querySelectorAll(".wui-open"));
+  var current = 0;
+
+  function show(i) {
+    if (i < 0) i = buttons.length - 1;
+    if (i >= buttons.length) i = 0;
+    current = i;
+    var b = buttons[i];
+    slot.innerHTML = b.dataset.video === "1"
+      ? '<video src="' + b.dataset.src + '" controls autoplay playsinline></video>'
+      : '<img src="' + b.dataset.src + '" alt="">';
+    box.classList.add("on");
+  }
+
+  function close() {
+    box.classList.remove("on");
+    slot.innerHTML = "";
+  }
+
+  buttons.forEach(function (b, i) {
+    b.addEventListener("click", function () { show(i); });
+  });
+
+  document.getElementById("wui-close").addEventListener("click", close);
+  document.getElementById("wui-prev").addEventListener("click", function () { show(current - 1); });
+  document.getElementById("wui-next").addEventListener("click", function () { show(current + 1); });
+  box.addEventListener("click", function (e) { if (e.target === box) close(); });
+  document.addEventListener("keydown", function (e) {
+    if (!box.classList.contains("on")) return;
+    if (e.key === "Escape") close();
+    if (e.key === "ArrowLeft") show(current - 1);
+    if (e.key === "ArrowRight") show(current + 1);
+  });
+})();
+</script>
+{% endblock %}

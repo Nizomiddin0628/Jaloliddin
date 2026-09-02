@@ -1,0 +1,121 @@
+{% extends "admin/base_site.html" %}
+{% load wedding_admin %}
+{% block content %}
+{% include "admin/_wedding_ui.html" %}
+{% wedding_stats as st %}
+
+<style>
+  .home-hello { font-size: 22px; margin: 0 0 6px; }
+  .home-lead { color: #6b7280; margin: 0 0 28px; font-size: 14px; line-height: 1.6; }
+
+  .home-tiles {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(255px, 1fr));
+    gap: 16px;
+    margin-bottom: 34px;
+  }
+  .home-tile,
+  a.home-tile:link,
+  a.home-tile:visited {
+    display: block;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-left: 4px solid #2f6b4f;
+    border-radius: 8px;
+    padding: 20px 22px;
+    text-decoration: none;
+    color: inherit;
+    transition: box-shadow .2s ease, transform .2s ease;
+  }
+  a.home-tile:hover {
+    box-shadow: 0 6px 20px rgba(0,0,0,.09);
+    transform: translateY(-2px);
+    text-decoration: none;
+  }
+  .home-tile h2 { margin: 0 0 6px; font-size: 17px; }
+  .home-tile .num { font-size: 26px; font-weight: 700; color: #2f6b4f; line-height: 1.2; }
+  .home-tile p { margin: 6px 0 0; color: #6b7280; font-size: 13px; line-height: 1.55; }
+
+  .home-note {
+    background: #f4f7f5;
+    border: 1px solid #dbe5df;
+    border-radius: 8px;
+    padding: 18px 22px;
+    font-size: 14px;
+    line-height: 1.7;
+    color: #384a41;
+    margin-bottom: 30px;
+  }
+  .home-note b { color: #24523c; }
+
+  .home-more { font-size: 13px; color: #6b7280; }
+  .home-more a { color: #2f6b4f; }
+</style>
+
+<div class="wui-wrap">
+  <h1 class="home-hello">
+    {% if st.wedding %}{{ st.wedding }} to'yi{% else %}Boshqaruv paneli{% endif %}
+  </h1>
+  <p class="home-lead">
+    Bu yerdan taklifnomadagi hamma narsani boshqarasiz. Kerakli bo'limni tanlang.
+  </p>
+
+  <div class="home-tiles">
+    {% if st.wedding %}
+      <a class="home-tile" href="{% url 'admin:invitation_wedding_change' st.wedding.pk %}">
+        <h2>To'y ma'lumotlari</h2>
+        <p>Ismlar, sana, to'yxona, xarita, rasmlar va musiqa.
+           Rasm yuklashni shu yerdan yoqasiz.</p>
+      </a>
+    {% else %}
+      <a class="home-tile" href="{% url 'admin:invitation_wedding_add' %}">
+        <h2>To'y ma'lumotlarini kiritish</h2>
+        <p>Avval shu yerni to'ldiring, aks holda taklifnoma ochilmaydi.</p>
+      </a>
+    {% endif %}
+
+    <a class="home-tile" href="{% url 'admin:invitation_guest_changelist' %}">
+      <h2>Mehmonlar</h2>
+      <div class="num">{{ st.guests }}</div>
+      <p>Har biriga shaxsiy havola va QR kod. Havolalarni CSV qilib olasiz.</p>
+    </a>
+
+    <a class="home-tile" href="{% url 'admin:invitation_rsvp_changelist' %}">
+      <h2>Javoblar</h2>
+      <div class="num">{{ st.people }}</div>
+      <p>{{ st.coming }} ta oila keladi, jami {{ st.people }} kishi.
+         {{ st.answered }} ta javob keldi.</p>
+    </a>
+
+    <a class="home-tile" href="{% url 'uploads-browser' %}">
+      <h2>Esdaliklar</h2>
+      <div class="num">{{ st.uploads }}</div>
+      <p>{{ st.uploaders }} kishi yuklagan. Bosib ko'rasiz va ZIP qilib olasiz.</p>
+    </a>
+
+    <a class="home-tile" href="{% url 'admin:invitation_wish_changelist' %}">
+      <h2>Tilaklar</h2>
+      <div class="num">{{ st.wishes }}</div>
+      <p>Sahifada hammaga ko'rinadi. Noo'rin yozuvni bir bosishda yashirasiz.</p>
+    </a>
+
+    <a class="home-tile" href="/" target="_blank">
+      <h2>Taklifnomani ochish</h2>
+      <p>Mehmon nimani ko'rishini o'zingiz tekshirib ko'ring.</p>
+    </a>
+  </div>
+
+  <div class="home-note">
+    <b>To'y o'tgandan keyin:</b> «To'y ma'lumotlari» ga kiring, <b>Sahifa rejimi</b> ni
+    «Rahmat sahifasi» ga o'zgartiring va <b>Rasm yuklash ochiq</b> katagini belgilang.
+    Shundan keyin o'sha eski havola rahmat sahifasini ochadi va mehmonlar
+    o'z rasmlarini yuklay boshlaydi. Yangi havola tarqatish shart emas.
+  </div>
+
+  <p class="home-more">
+    Qo'shimcha bo'limlar kerak bo'lsa:
+    <a href="{% url 'admin:app_list' app_label='invitation' %}">taklifnomaning barcha jadvallari</a>{% if user.is_superuser %} ·
+    <a href="{% url 'admin:auth_user_changelist' %}">foydalanuvchilar</a>{% endif %}
+  </p>
+</div>
+{% endblock %}

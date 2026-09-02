@@ -8,7 +8,7 @@ from urllib.parse import quote
 
 from django.conf import settings
 from django.contrib.admin.views.decorators import staff_member_required
-from django.db.models import Count, Sum
+from django.db.models import Count, Max, Min, Sum
 from django.http import FileResponse, Http404, HttpResponse
 from django.shortcuts import get_object_or_404, render
 from django.utils import timezone
@@ -351,32 +351,69 @@ def download_all(request):
 
 @staff_member_required
 def uploads_browser(request):
-    """Papka ko'rinishidagi galereya: har bir mehmon — alohida papka."""
+    """Kim nima yuklaganini kartochka ko'rinishida ko'rsatadi."""
     folders = (
         GuestUpload.objects.values("folder_name", "uploader_name")
-        .annotate(count=Count("id"), total=Sum("size"))
-        .order_by("-count")
+        .annotate(
+            count=Count("id"),
+            total=Sum("size"),
+            first_at=Min("created_at"),
+            last_at=Max("created_at"),
+        )
+        .order_by("-last_at")
     )
-    data = []
+
+    cards = []
     for f in folders:
-        items = GuestUpload.objects.filter(folder_name=f["folder_name"]).order_by("-created_at")
-        data.append(
+        items = GuestUpload.objects.filter(folder_name=f["folder_name"])
+        cover = items.filter(is_video=False).order_by("created_at").first() or items.first()
+        cards.append(
             {
                 "folder": f["folder_name"],
                 "name": f["uploader_name"],
                 "count": f["count"],
+                "photos": items.filter(is_video=False).count(),
+                "videos": items.filter(is_video=True).count(),
                 "size_mb": round((f["total"] or 0) / (1024 * 1024), 1),
-                "items": items,
+                "first_at": f["first_at"],
+                "last_at": f["last_at"],
+                "cover": cover,
             }
         )
+
     total_size = GuestUpload.objects.aggregate(s=Sum("size"))["s"] or 0
     return render(
         request,
         "admin/uploads_browser.html",
         {
-            "folders": data,
+            "cards": cards,
             "total_files": GuestUpload.objects.count(),
+            "total_people": len(cards),
             "total_size_mb": round(total_size / (1024 * 1024), 1),
             "title": "Mehmonlar yuklagan esdaliklar",
+        },
+    )
+
+
+@staff_member_required
+def uploads_folder(request, folder):
+    """Bitta mehmon yuklagan fayllar — alohida sahifa."""
+    items = GuestUpload.objects.filter(folder_name=folder).order_by("-created_at")
+    if not items.exists():
+        raise Http404("Bu papkada fayl yo'q.")
+
+    total = items.aggregate(s=Sum("size"))["s"] or 0
+    first = items.last()
+    return render(
+        request,
+        "admin/uploads_folder.html",
+        {
+            "folder": folder,
+            "name": first.uploader_name,
+            "items": items,
+            "count": items.count(),
+            "size_mb": round(total / (1024 * 1024), 1),
+            "first_at": first.created_at,
+            "title": f"{first.uploader_name} yuklagan esdaliklar",
         },
     )

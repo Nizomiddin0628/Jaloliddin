@@ -1733,3 +1733,35 @@ a {
   border-color: #fff;
   color: #fff;
 }
+
+/* ==========================================================================
+   Admin uchun yuqoridagi kichik panel (mehmonga ko'rinmaydi)
+   ========================================================================== */
+
+.adminbar,
+a.adminbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 80;
+  display: block;
+  text-align: center;
+  padding: 0.55rem 1rem;
+  background: #24523c;
+  color: #fff;
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-decoration: none;
+}
+
+.adminbar:hover {
+  background: #2f6b4f;
+  color: #fff;
+}
+
+/* Panel bosh ekranni bosib qolmasligi uchun */
+body:has(.adminbar) .hero {
+  padding-top: 4rem;
+}

@@ -233,7 +233,9 @@ class GuestUpload(models.Model):
     def save(self, *args, **kwargs):
         if not self.folder_name:
             base = slugify(self.uploader_name)[:24] or "mehmon"
-            suffix = self.guest.code if self.guest else _rand_code(4)
+            # Bir xil ism bir xil papkaga tushishi kerak — tasodifiy qism yo'q,
+            # aks holda bitta odamning rasmlari bo'linib ketadi.
+            suffix = self.guest.code if self.guest else "x"
             self.folder_name = f"{base}-{suffix}"
         super().save(*args, **kwargs)
 

@@ -10,6 +10,7 @@ urlpatterns = [
     path("wishes/", views.wish_create, name="wish-create"),
     # Faqat admin uchun — yuklangan fayllarni ko'rish va olish
     path("private/uploads/browser/", views.uploads_browser, name="uploads-browser"),
+    path("private/uploads/kishi/<str:folder>/", views.uploads_folder, name="uploads-folder"),
     path("private/uploads/all.zip", views.download_all, name="uploads-download-all"),
     path("private/uploads/folder/<str:folder>.zip", views.download_folder, name="uploads-download-folder"),
     path("private/uploads/<int:pk>/view/", views.upload_serve, name="upload-serve"),
