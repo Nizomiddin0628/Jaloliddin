@@ -88,18 +88,28 @@ TEMPLATES = [
 WSGI_APPLICATION = "config.wsgi.application"
 ASGI_APPLICATION = "config.asgi.application"
 
-# ---------------------------------------------------------------- baza
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": env("POSTGRES_DB", "toy_taklifnoma"),
-        "USER": env("POSTGRES_USER", "postgres"),
-        "PASSWORD": env("POSTGRES_PASSWORD", "postgres"),
-        "HOST": env("POSTGRES_HOST", "127.0.0.1"),
-        "PORT": env("POSTGRES_PORT", "5432"),
-        "CONN_MAX_AGE": 60,
+# Sukut bo'yicha PostgreSQL — kompyuteringizda shu ishlaydi.
+# Serverda 1 GB RAM bor, PostgreSQL o'ziga 300 MB oladi — bu qimmat.
+# Shuning uchun serverdagi .env da DB_ENGINE=sqlite yoziladi.
+if env("DB_ENGINE", "postgres").lower() == "sqlite":
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",
+        }
     }
-}
+else:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": env("POSTGRES_DB", "toy_taklifnoma"),
+            "USER": env("POSTGRES_USER", "postgres"),
+            "PASSWORD": env("POSTGRES_PASSWORD", "postgres"),
+            "HOST": env("POSTGRES_HOST", "127.0.0.1"),
+            "PORT": env("POSTGRES_PORT", "5432"),
+            "CONN_MAX_AGE": 60,
+        }
+    }
 
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},

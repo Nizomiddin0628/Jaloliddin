@@ -8,6 +8,8 @@ from django.db import models
 from django.utils import timezone
 from django.utils.text import slugify
 
+from .imaging import optimize
+
 # Mehmonlar yuklagan fayllar shu saqlagichga tushadi.
 # U MEDIA_ROOT'dan tashqarida, shuning uchun havolasini bilgan odam ham ocholmaydi.
 private_storage = FileSystemStorage(location=settings.PRIVATE_MEDIA_ROOT)
@@ -113,6 +115,10 @@ class Wedding(models.Model):
         verbose_name = "To'y"
         verbose_name_plural = "To'y sozlamalari"
 
+    def save(self, *args, **kwargs):
+        optimize(self.hero_image)
+        super().save(*args, **kwargs)
+
     def __str__(self):
         return f"{self.groom_name} & {self.bride_name}"
 
@@ -153,6 +159,10 @@ class GalleryPhoto(models.Model):
         verbose_name = "Galereya rasmi"
         verbose_name_plural = "Galereya"
 
+    def save(self, *args, **kwargs):
+        optimize(self.image)
+        super().save(*args, **kwargs)
+
     def __str__(self):
         return self.caption or f"Rasm #{self.pk}"
 
@@ -189,6 +199,7 @@ class Guest(models.Model):
         verbose_name_plural = "Mehmonlar"
 
     def save(self, *args, **kwargs):
+        optimize(self.hero_image)
         if not self.code:
             base = slugify(self.name)[:12] or "mehmon"
             for _ in range(20):

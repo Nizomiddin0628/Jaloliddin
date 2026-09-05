@@ -43,7 +43,7 @@ UI = {
         "story_title": "Shu kungacha",
         "gallery_title": "Biz haqimizda",
         "gallery_title_thanks": "O'sha kundan",
-        "event_title": "Marosim",
+        "event_title": "To'y marosimi",
         "fact_date": "Sana",
         "fact_time": "Vaqt",
         "fact_place": "Joy",

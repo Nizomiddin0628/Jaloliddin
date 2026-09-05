@@ -1,0 +1,36 @@
+# /etc/systemd/system/gunicorn.service ga ko'chiriladi.
+
+[Unit]
+Description=Toy taklifnomasi
+After=network.target
+
+[Service]
+User=toy
+Group=www-data
+WorkingDirectory=/home/toy/app/backend
+
+# MUHIM: gthread ishlatiladi, sync emas.
+#
+# Sync ishchi butun yuklash davomida band bo'lib qoladi. Sinovda ikki
+# mehmon video yuklaganda sahifa 16 soniya ochilmadi — chunki ikkala
+# ishchi ham band edi. gthread'da yuklash faqat bitta oqimni band qiladi,
+# qolgan oqimlar mehmonlarga sahifani berib turaveradi.
+#
+# 2 ishchi x 6 oqim = bir vaqtda 12 ta so'rov. Xotira esa deyarli o'sha,
+# chunki jarayonlar soni o'zgarmadi — 1 GB RAM uchun aynan shu kerak.
+ExecStart=/home/toy/app/backend/venv/bin/gunicorn \
+    --worker-class gthread \
+    --workers 2 \
+    --threads 6 \
+    --timeout 600 \
+    --graceful-timeout 60 \
+    --max-requests 1000 \
+    --max-requests-jitter 100 \
+    --bind 127.0.0.1:8000 \
+    config.wsgi:application
+
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

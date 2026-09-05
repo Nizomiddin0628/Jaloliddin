@@ -1,0 +1,39 @@
+# /etc/caddy/Caddyfile ga ko'chiriladi.
+# Domen va yo'llarni o'zingiznikiga almashtiring.
+
+jaloliddin-mushtariy.uz, www.jaloliddin-mushtariy.uz {
+    encode gzip zstd
+
+    # .env dagi MAX_UPLOAD_SIZE_MB (150) dan kattaroq bo'lsin
+    request_body {
+        max_size 180MB
+    }
+
+    handle_path /static/* {
+        root * /home/toy/app/backend/staticfiles
+        header Cache-Control "public, max-age=2592000"
+        file_server
+    }
+
+    # Ochiq media: bosh rasm, galereya, musiqa.
+    # Kesh sarlavhasi muhim — mehmon sahifani ikkinchi marta ochganda
+    # rasmlarni qaytadan yuklamaydi, trafik tejaladi.
+    handle_path /media/* {
+        root * /home/toy/app/backend/media
+        header Cache-Control "public, max-age=604800"
+        file_server
+    }
+
+    # DIQQAT: private_media bu yerda ATAYIN yo'q.
+    # Mehmonlar yuklagan esdaliklar faqat Django orqali, admin
+    # loginidan keyin beriladi. Bu yerga hech qachon qo'shmang.
+
+    handle {
+        reverse_proxy 127.0.0.1:8000 {
+            transport http {
+                read_timeout 600s
+                write_timeout 600s
+            }
+        }
+    }
+}

@@ -816,21 +816,19 @@ body:has(.adminbar) .langbar {
 }
 
 .map__foot {
-  padding: 0.9rem 1rem;
+  padding: 1.1rem 1rem 1.3rem;
   border-top: 1px solid var(--rule);
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
   align-items: center;
-  gap: 1rem;
-  flex-wrap: wrap;
+  gap: 0.9rem;
+  text-align: center;
 }
 
 .map__addr {
   font-size: 0.86rem;
   color: var(--muted);
   margin: 0;
-  flex: 1;
-  min-width: 11rem;
 }
 
 /* ------------------------------------------------------------------ tugmalar */
