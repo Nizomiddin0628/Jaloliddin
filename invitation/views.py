@@ -130,6 +130,12 @@ def invitation_page(request):
         for e in wedding.timeline.all()
     ]
 
+    # Mehmonning shaxsiy rasmi va musiqasi bo'lsa o'sha, bo'lmasa umumiysi
+    hero_file = (guest.hero_image if guest and guest.hero_image else wedding.hero_image)
+    music_file = (guest.music if guest and guest.music else wedding.music)
+    hero_url = hero_file.url if hero_file else ""
+    music_url = music_file.url if music_file else ""
+
     duas = [
         {
             "title": i18n.pick(d, "title", lang),
@@ -153,6 +159,8 @@ def invitation_page(request):
             "guest_code": code,
             "lang": lang,
             "L": L,
+            "hero_url": hero_url,
+            "music_url": music_url,
             "tx": tx,
             "link_uz": f"?{keep}lang=uz",
             "link_en": f"?{keep}lang=en",
@@ -302,8 +310,16 @@ def wish_create(request):
     code = (request.data.get("guest_code") or "").strip()
     guest = Guest.objects.filter(wedding=wedding, code__iexact=code).first() if code else None
 
-    wish = Wish.objects.create(wedding=wedding, guest=guest, **serializer.validated_data)
-    return Response(WishSerializer(wish).data, status=status.HTTP_201_CREATED)
+    wish = Wish.objects.create(
+        wedding=wedding,
+        guest=guest,
+        is_visible=not wedding.wishes_need_approval,
+        **serializer.validated_data,
+    )
+    data = WishSerializer(wish).data
+    # Tasdiq kutayotgan tilak sahifada darhol ko'rinmaydi
+    data["pending"] = not wish.is_visible
+    return Response(data, status=status.HTTP_201_CREATED)
 
 
 # ------------------------------------------------------- admin: ko'rish/yuklash

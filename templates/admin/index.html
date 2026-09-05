@@ -96,7 +96,12 @@
     <a class="home-tile" href="{% url 'admin:invitation_wish_changelist' %}">
       <h2>Tilaklar</h2>
       <div class="num">{{ st.wishes }}</div>
-      <p>Sahifada hammaga ko'rinadi. Noo'rin yozuvni bir bosishda yashirasiz.</p>
+      <p>
+        {% if st.wishes_pending %}
+          <b style="color:#b06a1f">{{ st.wishes_pending }} ta tasdiq kutmoqda.</b><br>
+        {% endif %}
+        Tasdiqlaganingizdan keyin sahifada hammaga ko'rinadi.
+      </p>
     </a>
 
     <a class="home-tile" href="/" target="_blank">

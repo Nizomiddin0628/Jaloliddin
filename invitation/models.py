@@ -88,6 +88,13 @@ class Wedding(models.Model):
     music = models.FileField("Fon musiqasi", upload_to=music_path, blank=True)
 
     rsvp_open = models.BooleanField("Javob berish ochiq", default=True)
+    wishes_need_approval = models.BooleanField(
+        "Tilaklar tasdiqdan o'tsin", default=True,
+        help_text=(
+            "Belgilangan bo'lsa, yangi tilak siz tasdiqlamaguningizcha "
+            "sahifada ko'rinmaydi."
+        )
+    )
     uploads_open = models.BooleanField("Rasm yuklash ochiq", default=False)
     thanks_title = models.CharField("Rahmat sarlavhasi", max_length=160, blank=True)
     thanks_title_en = models.CharField("Rahmat sarlavhasi (EN)", max_length=160, blank=True)
@@ -164,6 +171,14 @@ class Guest(models.Model):
     code = models.CharField("Kod", max_length=24, unique=True, blank=True)
     seats = models.PositiveSmallIntegerField("Necha kishiga", default=2)
     note = models.CharField("Ichki izoh", max_length=200, blank=True)
+    hero_image = models.ImageField(
+        "Shaxsiy bosh rasm", upload_to=hero_path, blank=True,
+        help_text="Bo'sh qolsa umumiy bosh rasm ko'rsatiladi."
+    )
+    music = models.FileField(
+        "Shaxsiy musiqa", upload_to=music_path, blank=True,
+        help_text="Bo'sh qolsa umumiy musiqa qo'yiladi."
+    )
     opened_at = models.DateTimeField("Birinchi ochilgan", null=True, blank=True)
     open_count = models.PositiveIntegerField("Necha marta ochilgan", default=0)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -274,7 +289,8 @@ class Wish(models.Model):
     name = models.CharField("Ism", max_length=120)
     text = models.TextField("Tilak")
     is_visible = models.BooleanField(
-        "Ko'rinadi", default=True, help_text="Belgini olsangiz sahifadan yo'qoladi."
+        "Sahifada ko'rinadi", default=False,
+        help_text="Belgilanmagan tilak faqat sizga ko'rinadi."
     )
     created_at = models.DateTimeField(auto_now_add=True)
 

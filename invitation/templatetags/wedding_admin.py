@@ -17,6 +17,7 @@ def wedding_stats():
         "coming": keladi.count(),
         "people": sum(r.seats for r in keladi),
         "wishes": Wish.objects.filter(is_visible=True).count(),
+        "wishes_pending": Wish.objects.filter(is_visible=False).count(),
         "uploads": GuestUpload.objects.count(),
         "uploaders": GuestUpload.objects.values("folder_name").distinct().count(),
     }

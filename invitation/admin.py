@@ -17,8 +17,12 @@ from .models import Dua, GalleryPhoto, Guest, GuestUpload, Rsvp, TimelineEvent, 
 class TimelineInline(admin.TabularInline):
     model = TimelineEvent
     extra = 1
-    fields = ["order", "date_label", "title", "text",
-              "date_label_en", "title_en", "text_en"]
+    fields = [
+        "order",
+        ("date_label", "date_label_en"),
+        ("title", "title_en"),
+        ("text", "text_en"),
+    ]
 
 
 class GalleryInline(admin.TabularInline):
@@ -43,48 +47,75 @@ class WeddingAdmin(admin.ModelAdmin):
     save_on_top = True
     fieldsets = (
         ("Sahifa holati", {
-            "fields": ("is_active", "mode", "rsvp_open", "uploads_open", "show_english"),
+            "fields": ("is_active", "mode", "rsvp_open", "uploads_open",
+                       "wishes_need_approval", "show_english"),
             "description": (
                 "To'y o'tgandan keyin rejimni «Rahmat sahifasi»ga o'tkazing va "
                 "«Rasm yuklash ochiq» belgisini qo'ying — mehmonlar o'sha havolaga "
                 "o'z rasmlarini yuklay boshlaydi."
             ),
         }),
-        ("Kuyov va kelin", {"fields": ("groom_name", "bride_name", "hero_image", "music")}),
-        ("Vaqt va joy", {
-            "fields": ("event_at", "welcome_time", "venue_name", "venue_address",
-                       "map_url", "latitude", "longitude")
+        ("Kuyov va kelin", {
+            "fields": (("groom_name", "groom_name_en"),
+                       ("bride_name", "bride_name_en"),
+                       "hero_image", "music"),
+            "description": "O'ng ustun — ingliz tili. Bo'sh qolsa chapdagisi ko'rsatiladi.",
         }),
-        ("Matnlar", {"fields": ("invite_text", "dress_code")}),
-        ("Inglizcha tarjima", {
-            "classes": ("collapse",),
+        ("Vaqt va joy", {
+            "fields": ("event_at", "welcome_time",
+                       ("venue_name", "venue_name_en"),
+                       ("venue_address", "venue_address_en"),
+                       "map_url", ("latitude", "longitude")),
             "description": (
-                "Ixtiyoriy. Bo'sh qoldirilgan maydon o'rniga o'zbekchasi ko'rsatiladi, "
-                "shuning uchun hammasini tarjima qilish shart emas."
+                "Xarita ko'rinishi uchun kenglik va uzunlik kerak. Google Maps'da "
+                "joyni topib, nuqtaga o'ng tugma bosing — koordinata chiqadi."
             ),
-            "fields": ("groom_name_en", "bride_name_en", "venue_name_en",
-                       "venue_address_en", "invite_text_en", "dress_code_en"),
+        }),
+        ("Matnlar", {
+            "fields": (("invite_text", "invite_text_en"),
+                       ("dress_code", "dress_code_en")),
         }),
         ("Aloqa", {
-            "fields": ("contact_one_name", "contact_one_phone",
-                       "contact_two_name", "contact_two_phone")
+            "fields": (("contact_one_name", "contact_one_phone"),
+                       ("contact_two_name", "contact_two_phone")),
         }),
         ("To'ydan keyin", {
-            "fields": ("thanks_title", "thanks_text", "upload_hint",
-                       "thanks_title_en", "thanks_text_en", "upload_hint_en")
+            "fields": (("thanks_title", "thanks_title_en"),
+                       ("thanks_text", "thanks_text_en"),
+                       ("upload_hint", "upload_hint_en")),
         }),
     )
 
 
 @admin.register(Guest)
 class GuestAdmin(admin.ModelAdmin):
-    list_display = ["display_name", "seats", "link_column", "open_count", "answer"]
+    list_display = ["display_name", "seats", "personal", "link_column",
+                    "open_count", "answer"]
     list_filter = ["seats", "opened_at"]
     search_fields = ["name", "code", "note"]
     readonly_fields = ["code", "open_count", "opened_at", "qr_preview"]
     actions = ["export_links_csv", "download_qr_zip"]
-    fields = ["wedding", "name", "honorific", "seats", "note", "code",
-              "qr_preview", "open_count", "opened_at"]
+    fieldsets = (
+        (None, {"fields": ("wedding", ("name", "honorific"), "seats", "note")}),
+        ("Shaxsiy bosh rasm va musiqa", {
+            "classes": ("collapse",),
+            "description": (
+                "Ixtiyoriy. Shu mehmon havolani ochganda aynan shu rasm va "
+                "musiqa chiqadi. Bo'sh qolsa umumiysi ishlatiladi."
+            ),
+            "fields": ("hero_image", "music"),
+        }),
+        ("Havola", {"fields": ("code", "qr_preview", "open_count", "opened_at")}),
+    )
+
+    @admin.display(description="Shaxsiy")
+    def personal(self, obj):
+        marks = []
+        if obj.hero_image:
+            marks.append("rasm")
+        if obj.music:
+            marks.append("musiqa")
+        return ", ".join(marks) if marks else "—"
 
     @admin.display(description="Shaxsiy havola")
     def link_column(self, obj):
@@ -261,12 +292,18 @@ class GuestUploadAdmin(admin.ModelAdmin):
 
 @admin.register(Wish)
 class WishAdmin(admin.ModelAdmin):
-    list_display = ["name", "short_text", "is_visible", "created_at"]
+    list_display = ["name", "short_text", "status", "is_visible", "created_at"]
     list_filter = ["is_visible", "created_at"]
     list_editable = ["is_visible"]
     search_fields = ["name", "text"]
     readonly_fields = ["created_at", "guest"]
-    actions = ["hide_wishes", "show_wishes"]
+    actions = ["show_wishes", "hide_wishes"]
+
+    @admin.display(description="Holati")
+    def status(self, obj):
+        if obj.is_visible:
+            return format_html('<b style="color:#2d6a2d">sahifada</b>')
+        return format_html('<span style="color:#b06a1f">tasdiq kutmoqda</span>')
 
     @admin.display(description="Tilak")
     def short_text(self, obj):
@@ -277,10 +314,10 @@ class WishAdmin(admin.ModelAdmin):
         count = queryset.update(is_visible=False)
         self.message_user(request, f"{count} ta tilak yashirildi.")
 
-    @admin.action(description="Sahifada ko'rsatish")
+    @admin.action(description="Tasdiqlash — sahifada ko'rsatish")
     def show_wishes(self, request, queryset):
         count = queryset.update(is_visible=True)
-        self.message_user(request, f"{count} ta tilak ko'rsatildi.")
+        self.message_user(request, f"{count} ta tilak tasdiqlandi.")
 
 
 @admin.register(Dua)

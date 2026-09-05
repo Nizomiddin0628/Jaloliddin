@@ -11,8 +11,8 @@
   <meta property="og:type" content="website">
   <meta property="og:title" content="{{ tx.groom }} &amp; {{ tx.bride }}">
   <meta property="og:description" content="{{ event_date }} · {{ tx.venue_name }}">
-  {% if w.hero_image %}
-    <meta property="og:image" content="{{ site_url }}{{ w.hero_image.url }}">
+  {% if hero_url %}
+    <meta property="og:image" content="{{ site_url }}{{ hero_url }}">
   {% endif %}
   <meta name="twitter:card" content="summary_large_image">
 
@@ -30,7 +30,9 @@
       maxUploadMb: {{ max_upload_mb }},
       wishes: {{ wishes_json|safe }},
       csrfToken: "{{ csrf_token }}",
-      lang: "{{ lang }}"
+      lang: "{{ lang }}",
+      wishPending: "{{ L.wish_pending|escapejs }}",
+      wishAdded: "{{ L.wish_added|escapejs }}"
     };
   </script>
 </head>
@@ -42,15 +44,17 @@
 
 {% if w.show_english %}
   <nav class="langbar" aria-label="Til">
-    <a href="{{ link_uz }}" {% if lang == 'uz' %}class="is-on" aria-current="true"{% endif %}>UZ</a>
-    <a href="{{ link_en }}" {% if lang == 'en' %}class="is-on" aria-current="true"{% endif %}>EN</a>
+    <a class="langlink {% if lang == 'uz' %}is-on{% endif %}" href="{{ link_uz }}"
+       {% if lang == 'uz' %}aria-current="true"{% endif %}>UZ</a>
+    <a class="langlink {% if lang == 'en' %}is-on{% endif %}" href="{{ link_en }}"
+       {% if lang == 'en' %}aria-current="true"{% endif %}>EN</a>
   </nav>
 {% endif %}
 
 {# =============================================== BOSH EKRAN #}
-<header class="hero {% if w.hero_image %}hero--photo{% else %}hero--plain{% endif %}">
-  {% if w.hero_image %}
-    <img class="hero__image" src="{{ w.hero_image.url }}" alt="" fetchpriority="high">
+<header class="hero {% if hero_url %}hero--photo{% else %}hero--plain{% endif %}">
+  {% if hero_url %}
+    <img class="hero__image" src="{{ hero_url }}" alt="" fetchpriority="high">
   {% endif %}
   <div class="hero__veil"></div>
   {% include "site/_frame.html" %}
@@ -72,7 +76,7 @@
       <div class="salute">
         {% if guest %}
           <span class="salute__label">{{ L.dear }}</span>
-          <span class="salute__name">{{ guest.display_name }}</span>
+          <span class="salute__name salute__name--big">{{ guest.display_name }}</span>
           <span class="salute__note">{{ L.greeting_note }}</span>
         {% else %}
           <span class="salute__label">{{ L.generic_label }}</span>
@@ -342,9 +346,13 @@
       </div>
 
       <div class="rotator__nav" x-show="n > 1">
-        <button type="button" @click="i = (i - 1 + n) % n" aria-label="{{ L.dua_prev }}">&larr;</button>
+        <button type="button" class="navbtn" @click="i = (i - 1 + n) % n" aria-label="{{ L.dua_prev }}">
+          <svg viewBox="0 0 20 20" fill="none"><path d="M12 4 L6 10 L12 16" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
         <span class="rotator__count" x-text="(i + 1) + ' / ' + n"></span>
-        <button type="button" @click="i = (i + 1) % n" aria-label="{{ L.dua_next }}">&rarr;</button>
+        <button type="button" class="navbtn" @click="i = (i + 1) % n" aria-label="{{ L.dua_next }}">
+          <svg viewBox="0 0 20 20" fill="none"><path d="M8 4 L14 10 L8 16" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
       </div>
     </div>
   </section>
@@ -372,6 +380,7 @@
         <button class="btn" type="submit" :disabled="sending"
                 x-text="sending ? '{{ L.sending }}' : '{{ L.send_wish }}'">{{ L.send_wish }}</button>
         <p class="form-error" x-show="error" x-text="error" x-cloak></p>
+        <p class="form-ok" x-show="notice" x-text="notice" x-cloak></p>
       </form>
 
       <div class="rotator" x-show="all.length" x-cloak
@@ -383,9 +392,13 @@
           </blockquote>
         </template>
         <div class="rotator__nav" x-show="all.length > 1">
-          <button type="button" @click="prev()" aria-label="{{ L.prev_wish }}">&larr;</button>
+          <button type="button" class="navbtn" @click="prev()" aria-label="{{ L.prev_wish }}">
+            <svg viewBox="0 0 20 20" fill="none"><path d="M12 4 L6 10 L12 16" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
           <span class="rotator__count" x-text="(index + 1) + ' / ' + all.length"></span>
-          <button type="button" @click="next()" aria-label="{{ L.next_wish }}">&rarr;</button>
+          <button type="button" class="navbtn" @click="next()" aria-label="{{ L.next_wish }}">
+            <svg viewBox="0 0 20 20" fill="none"><path d="M8 4 L14 10 L8 16" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
         </div>
       </div>
 
@@ -487,9 +500,9 @@
   </div>
 </footer>
 
-{% if w.music %}
+{% if music_url %}
 <div x-data="musicPlayer()">
-  <audio x-ref="audio" src="{{ w.music.url }}" loop preload="auto"></audio>
+  <audio x-ref="audio" src="{{ music_url }}" loop preload="auto"></audio>
   <button class="music" @click="toggle" :aria-pressed="playing"
           x-text="playing ? '❚❚' : '♪'">♪</button>
 </div>

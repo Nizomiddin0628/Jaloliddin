@@ -67,6 +67,8 @@ if (document.readyState === "loading") {
  */
 function autoScroll() {
   if (REDUCED) return;
+  // Mehmon tilni almashtirgan bo'lsa u sahifani allaqachon o'qiyapti
+  if (window.scrollY > 40) return;
 
   const SPEED = 22; // sekundiga piksel
   const root = document.documentElement;
@@ -115,6 +117,55 @@ if (document.readyState === "loading") {
   document.addEventListener("DOMContentLoaded", autoScroll);
 } else {
   autoScroll();
+}
+
+/* ------------------------------------------------- til almashtirish */
+
+/*
+ * Til tugmasi bosilganda sahifa boshiga sakramasin — mehmon qayerda
+ * turgan bo'lsa, yangi tilda ham o'sha joydan davom etsin.
+ */
+const SCROLL_KEY = "toy_scroll";
+
+function keepScrollOnLangSwitch() {
+  document.querySelectorAll(".langlink").forEach((link) => {
+    link.addEventListener("click", () => {
+      try {
+        sessionStorage.setItem(SCROLL_KEY, String(window.scrollY));
+      } catch (e) {}
+    });
+  });
+
+  let saved = null;
+  try {
+    saved = sessionStorage.getItem(SCROLL_KEY);
+    sessionStorage.removeItem(SCROLL_KEY);
+  } catch (e) {}
+
+  if (saved === null) return;
+  const y = parseInt(saved, 10);
+  if (!y) return;
+
+  // Brauzerning o'z tiklashini o'chiramiz, aks holda ikkalasi urishadi
+  if ("scrollRestoration" in history) history.scrollRestoration = "manual";
+
+  const jump = () => {
+    const prev = document.documentElement.style.scrollBehavior;
+    document.documentElement.style.scrollBehavior = "auto";
+    window.scrollTo(0, y);
+    document.documentElement.style.scrollBehavior = prev;
+  };
+
+  jump();
+  // Rasmlar yuklangach balandlik o'zgaradi, shuning uchun bir necha marta
+  [60, 220, 600].forEach((ms) => setTimeout(jump, ms));
+  window.addEventListener("load", jump, { once: true });
+}
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", keepScrollOnLangSwitch);
+} else {
+  keepScrollOnLangSwitch();
 }
 
 /* ------------------------------------------------------------ sanoq */
@@ -245,6 +296,7 @@ function wishWall() {
     text: "",
     sending: false,
     error: "",
+    notice: "",
     all: (CFG.wishes || []).slice(),
     index: 0,
     timer: null,
@@ -294,10 +346,16 @@ function wishWall() {
         });
         const data = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(data.detail || firstError(data) || "Yuborilmadi.");
-        this.all.unshift(data);
-        this.index = 0;
         this.text = "";
-        this.resume();
+        if (data.pending) {
+          // Tasdiqdan o'tmagan tilak sahifada ko'rinmaydi
+          this.notice = CFG.wishPending;
+        } else {
+          this.all.unshift(data);
+          this.index = 0;
+          this.notice = CFG.wishAdded;
+          this.resume();
+        }
       } catch (e) {
         this.error = e.message;
       } finally {
