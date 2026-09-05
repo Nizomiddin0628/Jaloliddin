@@ -18,6 +18,7 @@ from rest_framework.decorators import api_view, throttle_classes
 from rest_framework.response import Response
 from rest_framework.throttling import AnonRateThrottle
 
+from . import i18n
 from .models import Guest, GuestUpload, Rsvp, Wedding, Wish
 from .serializers import (
     GuestSerializer,
@@ -79,6 +80,9 @@ def invitation_page(request):
                 opened_at=guest.opened_at or timezone.now(),
             )
 
+    lang = i18n.clean_lang(request.GET.get("lang"))
+    L = i18n.UI[lang]
+
     local = timezone.localtime(wedding.event_at)
     has_point = wedding.latitude is not None and wedding.longitude is not None
     place_text = f"{wedding.venue_name} {wedding.venue_address}".strip()
@@ -104,6 +108,42 @@ def invitation_page(request):
     photos = list(wedding.gallery.all())
     wish_list = list(wedding.wishes.filter(is_visible=True)[:50])
 
+    # Tanlangan tildagi matnlar. Inglizchasi bo'sh bo'lsa o'zbekchasi chiqadi.
+    tx = {
+        "groom": i18n.pick(wedding, "groom_name", lang),
+        "bride": i18n.pick(wedding, "bride_name", lang),
+        "invite_text": i18n.pick(wedding, "invite_text", lang),
+        "venue_name": i18n.pick(wedding, "venue_name", lang),
+        "venue_address": i18n.pick(wedding, "venue_address", lang),
+        "dress_code": i18n.pick(wedding, "dress_code", lang),
+        "thanks_title": i18n.pick(wedding, "thanks_title", lang) or L["dear"],
+        "thanks_text": i18n.pick(wedding, "thanks_text", lang),
+        "upload_hint": i18n.pick(wedding, "upload_hint", lang) or L["upload_default_hint"],
+    }
+
+    story = [
+        {
+            "title": i18n.pick(e, "title", lang),
+            "date_label": i18n.pick(e, "date_label", lang),
+            "text": i18n.pick(e, "text", lang),
+        }
+        for e in wedding.timeline.all()
+    ]
+
+    duas = [
+        {
+            "title": i18n.pick(d, "title", lang),
+            "arabic": d.arabic,
+            "transliteration": d.transliteration,
+            "meaning": i18n.pick(d, "meaning", lang),
+            "source": d.source,
+        }
+        for d in wedding.duas.filter(is_visible=True)
+    ]
+
+    # Til tugmasi bosilganda mehmon kodi yo'qolmasligi kerak
+    keep = f"g={quote(code)}&" if code else ""
+
     return render(
         request,
         "site/index.html",
@@ -111,7 +151,13 @@ def invitation_page(request):
             "w": wedding,
             "guest": guest,
             "guest_code": code,
-            "timeline": wedding.timeline.all(),
+            "lang": lang,
+            "L": L,
+            "tx": tx,
+            "link_uz": f"?{keep}lang=uz",
+            "link_en": f"?{keep}lang=en",
+            "timeline": story,
+            "duas": duas,
             "gallery": photos,
             "wishes": wish_list,
             "wishes_json": json.dumps(
@@ -119,8 +165,8 @@ def invitation_page(request):
                 ensure_ascii=False,
             ),
             "event_iso": wedding.event_at.isoformat(),
-            "event_date": format_uz_date(local),
-            "event_weekday": UZ_WEEKDAYS[int(local.strftime("%w"))],
+            "event_date": i18n.format_date(local, lang),
+            "event_weekday": i18n.weekday(local, lang),
             "event_time": local.strftime("%H:%M"),
             "map_href": map_href,
             "map_embed": map_embed,
@@ -129,19 +175,6 @@ def invitation_page(request):
         },
     )
 
-
-UZ_MONTHS = [
-    "yanvar", "fevral", "mart", "aprel", "may", "iyun",
-    "iyul", "avgust", "sentabr", "oktabr", "noyabr", "dekabr",
-]
-UZ_WEEKDAYS = [
-    "yakshanba", "dushanba", "seshanba", "chorshanba",
-    "payshanba", "juma", "shanba",
-]
-
-
-def format_uz_date(dt):
-    return f"{dt.day}-{UZ_MONTHS[dt.month - 1]}, {dt.year}"
 
 
 # ------------------------------------------------------------------ ochiq API

@@ -1,17 +1,16 @@
 {% load static %}<!doctype html>
-<html lang="uz">
+<html lang="{{ lang }}">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="robots" content="noindex, nofollow">
-  <meta name="theme-color" content="#14120f">
-  <title>{{ w.groom_name }} va {{ w.bride_name }}</title>
-  <meta name="description" content="{{ event_date }} · {{ w.venue_name }}">
+  <meta name="theme-color" content="#fbf7ef">
+  <title>{{ tx.groom }} &amp; {{ tx.bride }}</title>
+  <meta name="description" content="{{ event_date }} · {{ tx.venue_name }}">
 
-  {# Telegram va WhatsApp'da havola kartochkasi #}
   <meta property="og:type" content="website">
-  <meta property="og:title" content="{{ w.groom_name }} va {{ w.bride_name }}">
-  <meta property="og:description" content="{{ event_date }} · {{ w.venue_name }}">
+  <meta property="og:title" content="{{ tx.groom }} &amp; {{ tx.bride }}">
+  <meta property="og:description" content="{{ event_date }} · {{ tx.venue_name }}">
   {% if w.hero_image %}
     <meta property="og:image" content="{{ site_url }}{{ w.hero_image.url }}">
   {% endif %}
@@ -30,15 +29,22 @@
       guestSeats: {% if guest %}{{ guest.seats }}{% else %}1{% endif %},
       maxUploadMb: {{ max_upload_mb }},
       wishes: {{ wishes_json|safe }},
-      csrfToken: "{{ csrf_token }}"
+      csrfToken: "{{ csrf_token }}",
+      lang: "{{ lang }}"
     };
   </script>
 </head>
 <body>
 
-{# Faqat admin ko'radi — mehmonga bu panel ko'rinmaydi #}
 {% if user.is_staff %}
-  <a class="adminbar" href="{% url 'admin:index' %}">Boshqaruv paneli</a>
+  <a class="adminbar" href="{% url 'admin:index' %}">{{ L.admin_panel }}</a>
+{% endif %}
+
+{% if w.show_english %}
+  <nav class="langbar" aria-label="Til">
+    <a href="{{ link_uz }}" {% if lang == 'uz' %}class="is-on" aria-current="true"{% endif %}>UZ</a>
+    <a href="{{ link_en }}" {% if lang == 'en' %}class="is-on" aria-current="true"{% endif %}>EN</a>
+  </nav>
 {% endif %}
 
 {# =============================================== BOSH EKRAN #}
@@ -47,79 +53,89 @@
     <img class="hero__image" src="{{ w.hero_image.url }}" alt="" fetchpriority="high">
   {% endif %}
   <div class="hero__veil"></div>
+  {% include "site/_frame.html" %}
+  {% include "site/_arch.html" %}
 
   <div class="hero__inner reveal">
     {% if w.mode == 'thanks' %}
       <div class="salute">
         {% if guest %}
-          <span class="salute__label">Hurmatli</span>
+          <span class="salute__label">{{ L.dear }}</span>
           <span class="salute__name">{{ guest.display_name }}</span>
         {% endif %}
       </div>
-      <h1 class="hero__names hero__names--short">{{ w.thanks_title|default:"Rahmat" }}</h1>
-      {% if w.thanks_text %}
-        <div class="hero__meta hero__meta--block">{{ w.thanks_text|linebreaksbr }}</div>
+      <h1 class="hero__names hero__names--short">{{ tx.thanks_title }}</h1>
+      {% if tx.thanks_text %}
+        <div class="hero__meta hero__meta--block">{{ tx.thanks_text|linebreaksbr }}</div>
       {% endif %}
     {% else %}
       <div class="salute">
         {% if guest %}
-          <span class="salute__label">Hurmatli</span>
+          <span class="salute__label">{{ L.dear }}</span>
           <span class="salute__name">{{ guest.display_name }}</span>
-          <span class="salute__note">sizni to'y marosimimizga taklif qilamiz</span>
+          <span class="salute__note">{{ L.greeting_note }}</span>
         {% else %}
-          <span class="salute__label">Taklifnoma</span>
-          <span class="salute__name">Sizni to'yimizga chorlaymiz</span>
+          <span class="salute__label">{{ L.generic_label }}</span>
+          <span class="salute__name">{{ L.generic_name }}</span>
         {% endif %}
       </div>
       <h1 class="hero__names">
-        {{ w.groom_name }}<span class="hero__amp">va</span>{{ w.bride_name }}
+        {{ tx.groom }}<span class="hero__amp">&amp;</span>{{ tx.bride }}
       </h1>
       <div class="hero__meta">
         <span>{{ event_date }}</span>
-        <span>{{ w.venue_name }}</span>
+        <span>{{ tx.venue_name }}</span>
       </div>
     {% endif %}
   </div>
 
-  <div class="hero__scroll" aria-hidden="true"></div>
+  <div class="chevron" aria-hidden="true">
+    <svg viewBox="0 0 24 14" fill="none"><path d="M2 2 L12 12 L22 2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+  </div>
 </header>
 
 <main>
 {% if w.mode != 'thanks' %}
 
-  {# =============================================== SANOQ VA TAKLIF #}
-  <section class="section shell appear">
-    <div class="countdown" x-data="countdown()" aria-label="To'yga qolgan vaqt">
+  {# =============================================== SANOQ — TO'Q EKRAN #}
+  <section class="sec sec--dark sec--full" x-data="countdown()">
+    {% include "site/_frame.html" %}
+    <div class="sec__inner appear">
+      <p class="sec__eyebrow">{{ L.countdown_title }}</p>
+      {% include "site/_divider.html" %}
+
       <template x-if="!done">
-        <div style="display:contents">
-          <div class="countdown__unit">
-            <span class="countdown__num" x-text="pad(left.kun)">—</span>
-            <span class="countdown__label">kun</span>
+        <div>
+          <div class="bigday">
+            <span class="bigday__num" x-text="left.kun">—</span>
+            <span class="bigday__label">{{ L.days }}</span>
           </div>
-          <div class="countdown__unit">
-            <span class="countdown__num" x-text="pad(left.soat)">—</span>
-            <span class="countdown__label">soat</span>
-          </div>
-          <div class="countdown__unit">
-            <span class="countdown__num" x-text="pad(left.daqiqa)">—</span>
-            <span class="countdown__label">daqiqa</span>
-          </div>
-          <div class="countdown__unit">
-            <span class="countdown__num" :class="{ 'is-tick': pulse }"
-                  x-text="pad(left.soniya)">—</span>
-            <span class="countdown__label">soniya</span>
+          <div class="smallunits">
+            <div><span class="smallunits__num" x-text="pad(left.soat)">—</span><span class="smallunits__lbl">{{ L.hours }}</span></div>
+            <div><span class="smallunits__num" x-text="pad(left.daqiqa)">—</span><span class="smallunits__lbl">{{ L.minutes }}</span></div>
+            <div><span class="smallunits__num" :class="{ 'is-tick': pulse }" x-text="pad(left.soniya)">—</span><span class="smallunits__lbl">{{ L.seconds }}</span></div>
           </div>
         </div>
       </template>
       <template x-if="done">
-        <p class="countdown__done">Bugun — o'sha kun.</p>
+        <p class="bigday__done">{{ L.today }}</p>
       </template>
-    </div>
 
-    {% if w.invite_text %}
-      <p class="lede" style="margin-top:2.75rem">{{ w.invite_text|linebreaksbr }}</p>
-    {% endif %}
+      <p class="sec__foot">{{ event_date }} · {{ event_weekday }}</p>
+    </div>
   </section>
+
+  {# =============================================== TAKLIF MATNI #}
+  {% if tx.invite_text %}
+  <section class="sec sec--full">
+    {% include "site/_frame.html" %}
+    <div class="sec__inner appear">
+      {% include "site/_divider.html" %}
+      <p class="lede lede--center">{{ tx.invite_text|linebreaksbr }}</p>
+      {% include "site/_divider.html" %}
+    </div>
+  </section>
+  {% endif %}
 
   {# =============================================== ALMASHIB TURUVCHI RASMLAR #}
   {% if gallery %}
@@ -134,7 +150,7 @@
       {% for p in gallery %}
         <button type="button" @click="go({{ forloop.counter0 }})"
                 :class="{ 'is-active': index === {{ forloop.counter0 }} }"
-                aria-label="{{ forloop.counter }}-rasm"></button>
+                aria-label="{{ forloop.counter }}"></button>
       {% endfor %}
     </div>
   </div>
@@ -142,300 +158,322 @@
 
   {# =============================================== SEVGI TARIXI #}
   {% if timeline %}
-  <section class="section shell">
-    <h2 class="section-title appear">Shu kungacha</h2>
-    <ol class="timeline">
-      {% for e in timeline %}
-        <li>
-          {% if e.date_label %}<span class="timeline__date">{{ e.date_label }}</span>{% endif %}
-          <h3 class="timeline__title">{{ e.title }}</h3>
-          {% if e.text %}<p class="timeline__text">{{ e.text }}</p>{% endif %}
-        </li>
-      {% endfor %}
-    </ol>
+  <section class="sec">
+    <div class="sec__inner appear">
+      <h2 class="sec__title">{{ L.story_title }}</h2>
+      {% include "site/_divider.html" %}
+      <ol class="timeline">
+        {% for e in timeline %}
+          <li>
+            {% if e.date_label %}<span class="timeline__date">{{ e.date_label }}</span>{% endif %}
+            <h3 class="timeline__title">{{ e.title }}</h3>
+            {% if e.text %}<p class="timeline__text">{{ e.text }}</p>{% endif %}
+          </li>
+        {% endfor %}
+      </ol>
+    </div>
   </section>
   {% endif %}
 {% endif %}
 
   {# =============================================== GALEREYA #}
   {% if gallery %}
-  <section class="section shell appear" x-data="{ open: null }"
-           @keydown.escape.window="open = null">
-    <h2 class="section-title">
-      {% if w.mode == 'thanks' %}O'sha kundan{% else %}Biz haqimizda{% endif %}
-    </h2>
-    <div class="gallery">
-      {% for p in gallery %}
-        <button class="gallery__item" @click="open = '{{ p.image.url }}'"
-                aria-label="{{ p.caption|default:'Rasmni kattalashtirish' }}">
-          <img src="{{ p.image.url }}" alt="{{ p.caption }}" loading="lazy">
-        </button>
-      {% endfor %}
+  <section class="sec sec--tinted" x-data="{ open: null }" @keydown.escape.window="open = null">
+    <div class="sec__inner appear">
+      <h2 class="sec__title">
+        {% if w.mode == 'thanks' %}{{ L.gallery_title_thanks }}{% else %}{{ L.gallery_title }}{% endif %}
+      </h2>
+      {% include "site/_divider.html" %}
+      <div class="gallery">
+        {% for p in gallery %}
+          <button class="gallery__item" @click="open = '{{ p.image.url }}'"
+                  aria-label="{{ p.caption }}">
+            <img src="{{ p.image.url }}" alt="{{ p.caption }}" loading="lazy">
+          </button>
+        {% endfor %}
+      </div>
     </div>
     <div class="lightbox" x-show="open" x-cloak @click="open = null"
          role="dialog" aria-modal="true" style="display:none">
-      <button class="lightbox__close" aria-label="Yopish" @click="open = null">&times;</button>
+      <button class="lightbox__close" aria-label="{{ L.close }}" @click="open = null">&times;</button>
       <img :src="open" alt="">
     </div>
   </section>
   {% endif %}
 
 {% if w.mode != 'thanks' %}
-
-
   {# =============================================== MAROSIM VA XARITA #}
-  <section class="section shell appear">
-    <h2 class="section-title">Marosim</h2>
-    <dl class="facts">
-      <div>
-        <dt>Sana</dt>
-        <dd><strong>{{ event_date }}</strong>, {{ event_weekday }}</dd>
-      </div>
-      <div>
-        <dt>Vaqt</dt>
-        <dd>
-          {% if w.welcome_time %}Kutib olish {{ w.welcome_time }} · {% endif %}
-          Boshlanishi {{ event_time }}
-        </dd>
-      </div>
-      <div>
-        <dt>Joy</dt>
-        <dd>
-          <strong>{{ w.venue_name }}</strong>
-          {% if w.venue_address %}<br>{{ w.venue_address }}{% endif %}
-        </dd>
-      </div>
-      {% if w.dress_code %}
-      <div>
-        <dt>Kiyim</dt>
-        <dd>{{ w.dress_code }}</dd>
-      </div>
-      {% endif %}
-    </dl>
-
-    {% if map_embed %}
-      <div class="map">
-        <iframe src="{{ map_embed }}" loading="lazy"
-                title="{{ w.venue_name }} joylashuvi"
-                referrerpolicy="no-referrer-when-downgrade"></iframe>
-        <div class="map__foot">
-          <p class="map__addr">{{ w.venue_address|default:w.venue_name }}</p>
-          {% if map_href %}
-            <a class="btn btn--ghost" href="{{ map_href }}" target="_blank" rel="noopener noreferrer">
-              Navigatorda ochish
-            </a>
-          {% endif %}
+  <section class="sec">
+    <div class="sec__inner appear">
+      <h2 class="sec__title">{{ L.event_title }}</h2>
+      {% include "site/_divider.html" %}
+      <dl class="facts">
+        <div>
+          <dt>{{ L.fact_date }}</dt>
+          <dd><strong>{{ event_date }}</strong>, {{ event_weekday }}</dd>
         </div>
-      </div>
-    {% elif map_href %}
-      <p style="margin-top:2rem">
-        <a class="btn btn--ghost" href="{{ map_href }}" target="_blank" rel="noopener noreferrer">
-          Xaritada ochish
-        </a>
-      </p>
-    {% endif %}
+        <div>
+          <dt>{{ L.fact_time }}</dt>
+          <dd>
+            {% if w.welcome_time %}{{ L.welcome_at }} {{ w.welcome_time }} · {% endif %}
+            {{ L.starts_at }} {{ event_time }}
+          </dd>
+        </div>
+        <div>
+          <dt>{{ L.fact_place }}</dt>
+          <dd>
+            <strong>{{ tx.venue_name }}</strong>
+            {% if tx.venue_address %}<br>{{ tx.venue_address }}{% endif %}
+          </dd>
+        </div>
+        {% if tx.dress_code %}
+        <div>
+          <dt>{{ L.fact_dress }}</dt>
+          <dd>{{ tx.dress_code }}</dd>
+        </div>
+        {% endif %}
+      </dl>
+
+      {% if map_embed %}
+        <div class="map">
+          <iframe src="{{ map_embed }}" loading="lazy"
+                  title="{{ tx.venue_name }}"
+                  referrerpolicy="no-referrer-when-downgrade"></iframe>
+          <div class="map__foot">
+            <p class="map__addr">{{ tx.venue_address|default:tx.venue_name }}</p>
+            {% if map_href %}
+              <a class="btn btn--ghost" href="{{ map_href }}" target="_blank" rel="noopener noreferrer">
+                {{ L.open_maps }}
+              </a>
+            {% endif %}
+          </div>
+        </div>
+      {% endif %}
+    </div>
   </section>
 
   {# =============================================== JAVOB #}
   {% if w.rsvp_open %}
-  <section class="section shell appear" x-data="rsvpForm()">
-    <template x-if="!sent">
-      <div>
-        <h2 class="section-title">
-          {% if guest %}{{ guest.name }}, kelasizmi?{% else %}Kelasizmi?{% endif %}
-        </h2>
-        <p class="lede" style="margin-bottom:2.25rem">
-          Javobingiz oshpazga aniq son aytishimizga yordam beradi.
-        </p>
+  <section class="sec sec--tinted" x-data="rsvpForm()">
+    <div class="sec__inner appear">
+      <template x-if="!sent">
+        <div>
+          <h2 class="sec__title">
+            {% if guest %}{{ guest.name }}{% if lang == 'en' %}, will you join us?{% else %}, kelasizmi?{% endif %}
+            {% else %}{{ L.rsvp_title }}{% endif %}
+          </h2>
+          {% include "site/_divider.html" %}
+          <p class="lede lede--center" style="margin-bottom:2.25rem">{{ L.rsvp_lead }}</p>
 
-        <form @submit.prevent="submit">
-          {% if not guest %}
-          <div class="field">
-            <label for="rsvp-name">Ismingiz</label>
-            <input id="rsvp-name" x-model="name" autocomplete="name">
-          </div>
-          {% endif %}
-
-          <div class="field">
-            <label>Javobingiz</label>
-            <div class="choice">
-              <button type="button" :aria-pressed="attending === true"
-                      @click="attending = true">Kelaman</button>
-              <button type="button" :aria-pressed="attending === false"
-                      @click="attending = false">Kelolmayman</button>
+          <form @submit.prevent="submit">
+            {% if not guest %}
+            <div class="field">
+              <label for="rsvp-name">{{ L.your_name }}</label>
+              <input id="rsvp-name" x-model="name" autocomplete="name">
             </div>
-          </div>
+            {% endif %}
 
-          <div class="field" x-show="attending === true" x-cloak>
-            <label for="rsvp-seats">Necha kishi bo'lasiz</label>
-            <select id="rsvp-seats" x-model="seats">
-              <option value="1">1</option><option value="2">2</option>
-              <option value="3">3</option><option value="4">4</option>
-              <option value="5">5</option><option value="6">6</option>
-              <option value="7">7</option><option value="8">8</option>
-              <option value="9">9</option><option value="10">10</option>
-            </select>
-          </div>
+            <div class="field">
+              <label>{{ L.your_answer }}</label>
+              <div class="choice">
+                <button type="button" :aria-pressed="attending === true"
+                        @click="attending = true">{{ L.coming }}</button>
+                <button type="button" :aria-pressed="attending === false"
+                        @click="attending = false">{{ L.not_coming }}</button>
+              </div>
+            </div>
 
-          {% if not guest %}
-          <div class="field">
-            <label for="rsvp-phone">Telefon raqamingiz</label>
-            <input id="rsvp-phone" type="tel" x-model="phone" placeholder="+998" autocomplete="tel">
-          </div>
-          {% endif %}
+            <div class="field" x-show="attending === true" x-cloak>
+              <label for="rsvp-seats">{{ L.how_many }}</label>
+              <select id="rsvp-seats" x-model="seats">
+                <option value="1">1</option><option value="2">2</option>
+                <option value="3">3</option><option value="4">4</option>
+                <option value="5">5</option><option value="6">6</option>
+                <option value="7">7</option><option value="8">8</option>
+                <option value="9">9</option><option value="10">10</option>
+              </select>
+            </div>
 
-          <button class="btn btn--wide" type="submit" :disabled="sending"
-                  x-text="sending ? 'Yuborilmoqda' : 'Javobni yuborish'">Javobni yuborish</button>
-          <p class="form-error" x-show="error" x-text="error" x-cloak></p>
-        </form>
-      </div>
-    </template>
+            {% if not guest %}
+            <div class="field">
+              <label for="rsvp-phone">{{ L.your_phone }}</label>
+              <input id="rsvp-phone" type="tel" x-model="phone" placeholder="+998" autocomplete="tel">
+            </div>
+            {% endif %}
 
-    <template x-if="sent">
-      <div class="done">
-        <h3 x-text="attending ? 'Javobingiz qabul qilindi' : 'Xabaringiz yetdi'"></h3>
-        <p x-text="attending
-          ? 'Sizni kutamiz. Kelolmay qolsangiz, shu sahifadan qayta xabar bering.'
-          : 'Afsus, lekin xabar berganingiz uchun rahmat.'"></p>
-      </div>
-    </template>
+            <button class="btn btn--wide" type="submit" :disabled="sending"
+                    x-text="sending ? '{{ L.sending }}' : '{{ L.send_answer }}'">{{ L.send_answer }}</button>
+            <p class="form-error" x-show="error" x-text="error" x-cloak></p>
+          </form>
+        </div>
+      </template>
+
+      <template x-if="sent">
+        <div class="done">
+          <h3 x-text="attending ? '{{ L.rsvp_done_yes }}' : '{{ L.rsvp_done_no }}'"></h3>
+          <p x-text="attending ? '{{ L.rsvp_done_yes_text }}' : '{{ L.rsvp_done_no_text }}'"></p>
+        </div>
+      </template>
+    </div>
   </section>
   {% endif %}
 {% endif %}
 
-  {# =============================================== TILAKLAR #}
-  <section class="section shell appear" x-data="wishWall()">
-    <h2 class="section-title">Tilaklar</h2>
-    <p class="lede" style="margin-bottom:2.25rem">
-      Yosh oilaga bir og'iz yaxshi so'z qoldiring — hammaga ko'rinadi.
-    </p>
+  {# =============================================== DUOLAR #}
+  {% if duas %}
+  <section class="sec sec--dark" x-data="{ i: 0, n: {{ duas|length }} }">
+    {% include "site/_frame.html" %}
+    <div class="sec__inner appear">
+      <h2 class="sec__title">{{ L.duas_title }}</h2>
+      {% include "site/_divider.html" %}
+      <p class="lede lede--center" style="margin-bottom:2.5rem">{{ L.duas_lead }}</p>
 
-    <form @submit.prevent="submit">
-      {% if not guest %}
-      <div class="field">
-        <label for="wish-name">Ismingiz</label>
-        <input id="wish-name" x-model="name" autocomplete="name">
+      <div class="duas">
+        {% for d in duas %}
+          <article class="dua" :class="{ 'is-active': i === {{ forloop.counter0 }} }"
+                   {% if forloop.first %}class="dua is-active"{% endif %}>
+            <h3 class="dua__title">{{ d.title }}</h3>
+            {% if d.arabic %}<p class="dua__ar" dir="rtl" lang="ar">{{ d.arabic }}</p>{% endif %}
+            {% if d.transliteration %}<p class="dua__tr">{{ d.transliteration }}</p>{% endif %}
+            <p class="dua__mn">{{ d.meaning }}</p>
+            {% if d.source %}<p class="dua__src">{{ d.source }}</p>{% endif %}
+          </article>
+        {% endfor %}
       </div>
-      {% endif %}
-      <div class="field">
-        <label for="wish-text">Tilagingiz</label>
-        <textarea id="wish-text" x-model="text" maxlength="600"
-                  placeholder="Baxtli bo'linglar…"></textarea>
-      </div>
-      <button class="btn" type="submit" :disabled="sending"
-              x-text="sending ? 'Yuborilmoqda' : 'Tilakni qoldirish'">Tilakni qoldirish</button>
-      <p class="form-error" x-show="error" x-text="error" x-cloak></p>
-    </form>
 
-    <div class="rotator" x-show="all.length" x-cloak
-         @mouseenter="pause()" @mouseleave="resume()">
-      <template x-for="(wish, i) in all" :key="wish.id">
-        <blockquote class="rotator__card" :class="{ 'is-active': i === index }">
-          <p class="rotator__text" x-text="wish.text"></p>
-          <footer class="rotator__from" x-text="wish.name"></footer>
-        </blockquote>
-      </template>
-
-      <div class="rotator__nav" x-show="all.length > 1">
-        <button type="button" @click="prev()" aria-label="Oldingi tilak">&larr;</button>
-        <span class="rotator__count" x-text="(index + 1) + ' / ' + all.length"></span>
-        <button type="button" @click="next()" aria-label="Keyingi tilak">&rarr;</button>
+      <div class="rotator__nav" x-show="n > 1">
+        <button type="button" @click="i = (i - 1 + n) % n" aria-label="{{ L.dua_prev }}">&larr;</button>
+        <span class="rotator__count" x-text="(i + 1) + ' / ' + n"></span>
+        <button type="button" @click="i = (i + 1) % n" aria-label="{{ L.dua_next }}">&rarr;</button>
       </div>
     </div>
+  </section>
+  {% endif %}
 
-    <p class="wishes-empty" x-show="!all.length" x-cloak>
-      Hali tilak yo'q. Birinchi bo'lib siz yozing.
-    </p>
+  {# =============================================== TILAKLAR #}
+  <section class="sec" x-data="wishWall()">
+    <div class="sec__inner appear">
+      <h2 class="sec__title">{{ L.wishes_title }}</h2>
+      {% include "site/_divider.html" %}
+      <p class="lede lede--center" style="margin-bottom:2.25rem">{{ L.wishes_lead }}</p>
+
+      <form @submit.prevent="submit">
+        {% if not guest %}
+        <div class="field">
+          <label for="wish-name">{{ L.your_name }}</label>
+          <input id="wish-name" x-model="name" autocomplete="name">
+        </div>
+        {% endif %}
+        <div class="field">
+          <label for="wish-text">{{ L.your_wish }}</label>
+          <textarea id="wish-text" x-model="text" maxlength="600"
+                    placeholder="{{ L.wish_placeholder }}"></textarea>
+        </div>
+        <button class="btn" type="submit" :disabled="sending"
+                x-text="sending ? '{{ L.sending }}' : '{{ L.send_wish }}'">{{ L.send_wish }}</button>
+        <p class="form-error" x-show="error" x-text="error" x-cloak></p>
+      </form>
+
+      <div class="rotator" x-show="all.length" x-cloak
+           @mouseenter="pause()" @mouseleave="resume()">
+        <template x-for="(wish, i) in all" :key="wish.id">
+          <blockquote class="rotator__card" :class="{ 'is-active': i === index }">
+            <p class="rotator__text" x-text="wish.text"></p>
+            <footer class="rotator__from" x-text="wish.name"></footer>
+          </blockquote>
+        </template>
+        <div class="rotator__nav" x-show="all.length > 1">
+          <button type="button" @click="prev()" aria-label="{{ L.prev_wish }}">&larr;</button>
+          <span class="rotator__count" x-text="(index + 1) + ' / ' + all.length"></span>
+          <button type="button" @click="next()" aria-label="{{ L.next_wish }}">&rarr;</button>
+        </div>
+      </div>
+
+      <p class="wishes-empty" x-show="!all.length" x-cloak>{{ L.no_wishes }}</p>
+    </div>
   </section>
 
   {# =============================================== ESDALIK RASMLARI #}
   {% if w.uploads_open %}
-  <section class="section shell appear" x-data="uploader()">
-    <h2 class="section-title">Esdalik rasmlarini yuklash</h2>
-    <p class="lede" style="margin-bottom:2.25rem">
-      {% if w.upload_hint %}{{ w.upload_hint|linebreaksbr }}
-      {% else %}O'sha kunda olgan rasm va videolaringizni shu yerga qoldiring.{% endif %}
-    </p>
+  <section class="sec sec--tinted" x-data="uploader()">
+    <div class="sec__inner appear">
+      <h2 class="sec__title">{{ L.upload_title }}</h2>
+      {% include "site/_divider.html" %}
+      <p class="lede lede--center" style="margin-bottom:2.25rem">{{ tx.upload_hint|linebreaksbr }}</p>
 
-    <div class="field">
-      <label for="up-name">Ismingiz</label>
-      <input id="up-name" x-model="name" placeholder="Masalan: Akmal Karimov" autocomplete="name">
-    </div>
-
-    <div class="drop" :class="{ 'drop--over': dragging }"
-         @dragover.prevent="dragging = true"
-         @dragleave="dragging = false"
-         @drop.prevent="dragging = false; addFiles($event.dataTransfer.files)">
-      <p>Rasm va videolar asl sifatida saqlanadi — siqilmaydi.</p>
-
-      <div class="btn-row">
-        <label class="btn" style="cursor:pointer">
-          Galereyadan tanlash
-          <input type="file" multiple style="display:none"
-                 accept="image/*,video/*,image/heic,image/heif,.heic,.heif,.mov,.mp4,.m4v,.dng"
-                 @change="addFiles($event.target.files); $event.target.value = ''">
-        </label>
-
-        <button type="button" class="btn btn--ghost" @click="openCamera()">
-          Hozir rasmga olish
-        </button>
+      <div class="field">
+        <label for="up-name">{{ L.your_name }}</label>
+        <input id="up-name" x-model="name" autocomplete="name">
       </div>
+
+      <div class="drop" :class="{ 'drop--over': dragging }"
+           @dragover.prevent="dragging = true"
+           @dragleave="dragging = false"
+           @drop.prevent="dragging = false; addFiles($event.dataTransfer.files)">
+        <p>{{ L.upload_note }}</p>
+        <div class="btn-row">
+          <label class="btn" style="cursor:pointer">
+            {{ L.pick_gallery }}
+            <input type="file" multiple style="display:none"
+                   accept="image/*,video/*,image/heic,image/heif,.heic,.heif,.mov,.mp4,.m4v,.dng"
+                   @change="addFiles($event.target.files); $event.target.value = ''">
+          </label>
+          <button type="button" class="btn btn--ghost" @click="openCamera()">
+            {{ L.take_photo }}
+          </button>
+        </div>
+      </div>
+
+      <p class="form-error" x-show="error" x-text="error" x-cloak></p>
+
+      <template x-if="items.length">
+        <div>
+          <ul class="queue">
+            <template x-for="it in items" :key="it.id">
+              <li>
+                <div class="queue__row">
+                  <span class="queue__name" x-text="it.name"></span>
+                  <span class="queue__state"
+                        :class="{ 'queue__state--ok': it.state === 'done',
+                                  'queue__state--err': it.state === 'error' }"
+                        x-text="stateText(it)"></span>
+                </div>
+                <div class="bar" x-show="it.state === 'uploading'" x-cloak>
+                  <span :style="`width:${it.progress}%`"></span>
+                </div>
+              </li>
+            </template>
+          </ul>
+          <p class="form-note" x-text="busy
+            ? '{{ L.uploading }}'
+            : doneCount + ' {{ L.uploaded_count }}'"></p>
+        </div>
+      </template>
+
+      <p class="form-note">{{ L.upload_privacy }}</p>
     </div>
 
-    {# Kamera oynasi #}
     <div class="cam" x-show="camOpen" x-cloak role="dialog" aria-modal="true">
       <div class="cam__inner">
         <video x-ref="cam" playsinline muted x-show="!camError"></video>
-
         <p class="cam__error" x-show="camError" x-text="camError"></p>
-
         <div class="cam__bar">
-          <button type="button" class="btn btn--ghost" @click="closeCamera()">Yopish</button>
-          <button type="button" class="btn" @click="shoot()" x-show="!camError">Rasmga olish</button>
+          <button type="button" class="btn btn--ghost" @click="closeCamera()">{{ L.close }}</button>
+          <button type="button" class="btn" @click="shoot()" x-show="!camError">{{ L.shoot }}</button>
         </div>
       </div>
     </div>
-
-    <p class="form-error" x-show="error" x-text="error" x-cloak></p>
-
-    <template x-if="items.length">
-      <div>
-        <ul class="queue">
-          <template x-for="it in items" :key="it.id">
-            <li>
-              <div class="queue__row">
-                <span class="queue__name" x-text="it.name"></span>
-                <span class="queue__state"
-                      :class="{ 'queue__state--ok': it.state === 'done',
-                                'queue__state--err': it.state === 'error' }"
-                      x-text="stateText(it)"></span>
-              </div>
-              <div class="bar" x-show="it.state === 'uploading'" x-cloak>
-                <span :style="`width:${it.progress}%`"></span>
-              </div>
-            </li>
-          </template>
-        </ul>
-        <p class="form-note" x-text="busy
-          ? 'Yuklanmoqda — sahifani yopmang.'
-          : doneCount + ' ta fayl yuklandi. Rahmat!'"></p>
-      </div>
-    </template>
-
-    <p class="form-note">
-      Yuklangan fayllarni faqat kuyov va kelin ko'radi, sahifada hech kimga ko'rinmaydi.
-      Kamera bilan olingan rasm telefon kamerasidan pastroq sifatda chiqadi — bor rasmni
-      galereyadan tanlagan ma'qul.
-    </p>
   </section>
   {% endif %}
 </main>
 
 {# =============================================== FOOTER #}
 <footer class="footer">
+  {% include "site/_frame.html" %}
   <div class="footer__inner">
-    <p class="footer__names">{{ w.groom_name }} va {{ w.bride_name }}</p>
-    <p>Sizni ko'rishdan mamnun bo'lamiz.</p>
+    {% include "site/_divider.html" %}
+    <p class="footer__names">{{ tx.groom }} &amp; {{ tx.bride }}</p>
+    <p>{{ L.footer_note }}</p>
     {% if w.contact_one_phone or w.contact_two_phone %}
       <p style="margin-top:1.25rem">
         {% if w.contact_one_phone %}
@@ -449,12 +487,10 @@
   </div>
 </footer>
 
-{# =============================================== MUSIQA #}
 {% if w.music %}
 <div x-data="musicPlayer()">
   <audio x-ref="audio" src="{{ w.music.url }}" loop preload="auto"></audio>
   <button class="music" @click="toggle" :aria-pressed="playing"
-          :aria-label="playing ? 'Musiqani o`chirish' : 'Musiqani yoqish'"
           x-text="playing ? '❚❚' : '♪'">♪</button>
 </div>
 {% endif %}

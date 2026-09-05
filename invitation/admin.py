@@ -11,13 +11,14 @@ from django.urls import path, reverse
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 
-from .models import GalleryPhoto, Guest, GuestUpload, Rsvp, TimelineEvent, Wedding, Wish
+from .models import Dua, GalleryPhoto, Guest, GuestUpload, Rsvp, TimelineEvent, Wedding, Wish
 
 
 class TimelineInline(admin.TabularInline):
     model = TimelineEvent
     extra = 1
-    fields = ["order", "date_label", "title", "text"]
+    fields = ["order", "date_label", "title", "text",
+              "date_label_en", "title_en", "text_en"]
 
 
 class GalleryInline(admin.TabularInline):
@@ -42,7 +43,7 @@ class WeddingAdmin(admin.ModelAdmin):
     save_on_top = True
     fieldsets = (
         ("Sahifa holati", {
-            "fields": ("is_active", "mode", "rsvp_open", "uploads_open"),
+            "fields": ("is_active", "mode", "rsvp_open", "uploads_open", "show_english"),
             "description": (
                 "To'y o'tgandan keyin rejimni «Rahmat sahifasi»ga o'tkazing va "
                 "«Rasm yuklash ochiq» belgisini qo'ying — mehmonlar o'sha havolaga "
@@ -55,11 +56,23 @@ class WeddingAdmin(admin.ModelAdmin):
                        "map_url", "latitude", "longitude")
         }),
         ("Matnlar", {"fields": ("invite_text", "dress_code")}),
+        ("Inglizcha tarjima", {
+            "classes": ("collapse",),
+            "description": (
+                "Ixtiyoriy. Bo'sh qoldirilgan maydon o'rniga o'zbekchasi ko'rsatiladi, "
+                "shuning uchun hammasini tarjima qilish shart emas."
+            ),
+            "fields": ("groom_name_en", "bride_name_en", "venue_name_en",
+                       "venue_address_en", "invite_text_en", "dress_code_en"),
+        }),
         ("Aloqa", {
             "fields": ("contact_one_name", "contact_one_phone",
                        "contact_two_name", "contact_two_phone")
         }),
-        ("To'ydan keyin", {"fields": ("thanks_title", "thanks_text", "upload_hint")}),
+        ("To'ydan keyin", {
+            "fields": ("thanks_title", "thanks_text", "upload_hint",
+                       "thanks_title_en", "thanks_text_en", "upload_hint_en")
+        }),
     )
 
 
@@ -268,3 +281,24 @@ class WishAdmin(admin.ModelAdmin):
     def show_wishes(self, request, queryset):
         count = queryset.update(is_visible=True)
         self.message_user(request, f"{count} ta tilak ko'rsatildi.")
+
+
+@admin.register(Dua)
+class DuaAdmin(admin.ModelAdmin):
+    list_display = ["order", "title", "short_meaning", "source", "is_visible"]
+    list_editable = ["order", "is_visible"]
+    list_display_links = ["title"]
+    search_fields = ["title", "meaning", "transliteration"]
+    fieldsets = (
+        (None, {"fields": ("wedding", "order", "is_visible", "title", "source")}),
+        ("Matn", {"fields": ("arabic", "transliteration", "meaning")}),
+        ("Inglizcha", {
+            "classes": ("collapse",),
+            "description": "Ixtiyoriy. Bo'sh qolsa o'zbekchasi ko'rsatiladi.",
+            "fields": ("title_en", "meaning_en"),
+        }),
+    )
+
+    @admin.display(description="Ma'nosi")
+    def short_meaning(self, obj):
+        return (obj.meaning[:70] + "…") if len(obj.meaning) > 70 else obj.meaning

@@ -30,7 +30,7 @@ function firstError(data) {
  * Telefonda «harakatni kamaytirish» yoqilgan bo'lsa, hammasi darhol ko'rinadi.
  */
 function watchScroll() {
-  const targets = document.querySelectorAll(".appear, .band, .timeline");
+  const targets = document.querySelectorAll(".appear, .timeline, .slideshow");
 
   if (REDUCED || !("IntersectionObserver" in window)) {
     targets.forEach((el) => el.classList.add("in"));
