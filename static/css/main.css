@@ -277,8 +277,34 @@ body:has(.adminbar) .langbar {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  /* Telefonda rasm markazdan kesiladi — vertikal rasm shunda to'g'ri chiqadi */
+  object-position: center;
   z-index: 0;
   animation: kenburns 30s var(--ease) forwards;
+}
+
+/* Keng ekranda vertikal rasm cho'zilib, yuz kesilib qoladi.
+   Shuning uchun kesish nuqtasini yuqoriga suramiz va rasmni
+   biroz kichraytiramiz — kompozitsiya buzilmaydi. */
+@media (min-width: 56rem) {
+  .hero__image {
+    object-position: center 22%;
+    animation: kenburns-wide 34s var(--ease) forwards;
+  }
+
+  .hero {
+    /* Matn ustunini o'ngroqqa surmasdan, hero balandligini cheklaymiz */
+    max-height: 100svh;
+  }
+}
+
+@keyframes kenburns-wide {
+  from {
+    transform: scale(1.08);
+  }
+  to {
+    transform: scale(1);
+  }
 }
 
 @keyframes kenburns {
