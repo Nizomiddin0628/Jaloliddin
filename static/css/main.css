@@ -288,13 +288,26 @@ body:has(.adminbar) .langbar {
    biroz kichraytiramiz — kompozitsiya buzilmaydi. */
 @media (min-width: 56rem) {
   .hero__image {
-    object-position: center 22%;
+    object-position: center 18%;
     animation: kenburns-wide 34s var(--ease) forwards;
   }
 
   .hero {
-    /* Matn ustunini o'ngroqqa surmasdan, hero balandligini cheklaymiz */
     max-height: 100svh;
+    /* Matnni pastga suramiz — yuz tepada toza qoladi */
+    justify-content: flex-end;
+    padding-bottom: clamp(4rem, 9vh, 7rem);
+  }
+
+  /* Pastdagi to'q parda kuchliroq bo'lsin, matn aniq o'qilsin */
+  .hero--photo .hero__veil {
+    background: linear-gradient(
+      to top,
+      rgba(20, 16, 10, 0.9) 0%,
+      rgba(20, 16, 10, 0.62) 42%,
+      rgba(20, 16, 10, 0.18) 75%,
+      rgba(20, 16, 10, 0.28) 100%
+    );
   }
 }
 
