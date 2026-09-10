@@ -1,0 +1,791 @@
+[
+{
+  "model": "invitation.wedding",
+  "pk": 1,
+  "fields": {
+    "is_active": true,
+    "mode": "invitation",
+    "groom_name": "Jalolliddin",
+    "bride_name": "Mushtariy",
+    "groom_name_en": "Charlie",
+    "bride_name_en": "Mushtariy",
+    "event_at": "2026-09-21T02:00:00Z",
+    "welcome_time": "6:00",
+    "venue_name": "Arana",
+    "venue_name_en": "Arana",
+    "venue_address": "G8CR+364, Marhamat, Andijon viloyati",
+    "venue_address_en": "G8CR+364, Marhamat, Andijon",
+    "map_url": "https://www.google.com/maps/place/ARANA+toyxona/@40.5203295,72.3406238,606m/data=!3m1!1e3!4m7!3m6!1s0x38bc5f6ca94dbe4b:0xae7c591147ddb3e2!4b1!8m2!3d40.5201347!4d72.340572!16s%2Fg%2F11vcl8gb6g?entry=tt",
+    "latitude": 40.520087,
+    "longitude": 72.340367,
+    "invite_text": "Hayotimizning eng baxtli kunida yonimizda bo'lishingizni istaymiz. Sizni to'y marosimimizga chin dildan taklif qilamiz.",
+    "invite_text_en": "We want you to be with us on the happiest day of our lives. We sincerely invite you to our wedding ceremony.",
+    "dress_code": "Klassik uslub",
+    "dress_code_en": "",
+    "contact_one_name": "Jaloliddin",
+    "contact_one_phone": "+998 90 123 45 67",
+    "contact_two_name": "Charlie",
+    "contact_two_phone": "+998 93 765 43 21",
+    "hero_image": "hero/9b9d3b14fbbf.jpg",
+    "music": "music/4762210f41ee.mp3",
+    "rsvp_open": false,
+    "wishes_need_approval": true,
+    "uploads_open": true,
+    "thanks_title": "Kelganingiz uchun rahmat",
+    "thanks_title_en": "Thank you for coming.",
+    "thanks_text": "O'sha kunni siz bilan birga o'tkazdik. Endi eng qimmatli qismi qoldi — o'sha kechada olgan rasm va videolaringizni shu yerga qoldiring.",
+    "thanks_text_en": "We spent that day with you. Now the most precious part remains — leave your photos and videos from that night here.",
+    "upload_hint": "Telefoningiz galereyasidan tanlang. Fayllar asl sifatida saqlanadi, faqat kuyov-kelin ko'radi.",
+    "upload_hint_en": "Select from your phone's gallery. The files will be saved as originals, visible only to the bride and groom.",
+    "show_english": true,
+    "updated_at": "2026-09-05T20:32:30.903Z"
+  }
+},
+{
+  "model": "invitation.guest",
+  "pk": 1,
+  "fields": {
+    "wedding": 1,
+    "name": "Akmal",
+    "honorific": "aka",
+    "code": "akmal-fym6",
+    "seats": 2,
+    "note": "",
+    "hero_image": "",
+    "music": "",
+    "opened_at": "2026-09-01T19:50:28.303Z",
+    "open_count": 3,
+    "created_at": "2026-09-01T14:27:30.893Z"
+  }
+},
+{
+  "model": "invitation.guest",
+  "pk": 2,
+  "fields": {
+    "wedding": 1,
+    "name": "Zuhra",
+    "honorific": "opa",
+    "code": "zuhra-udvn",
+    "seats": 4,
+    "note": "",
+    "hero_image": "",
+    "music": "",
+    "opened_at": null,
+    "open_count": 0,
+    "created_at": "2026-09-01T14:27:30.894Z"
+  }
+},
+{
+  "model": "invitation.guest",
+  "pk": 3,
+  "fields": {
+    "wedding": 1,
+    "name": "Bekzod",
+    "honorific": "",
+    "code": "bekzod-curr",
+    "seats": 2,
+    "note": "",
+    "hero_image": "",
+    "music": "",
+    "opened_at": "2026-09-01T20:04:54.015Z",
+    "open_count": 12,
+    "created_at": "2026-09-01T14:27:30.895Z"
+  }
+},
+{
+  "model": "invitation.guest",
+  "pk": 4,
+  "fields": {
+    "wedding": 1,
+    "name": "jalolididn",
+    "honorific": "",
+    "code": "jalolididn-f4zh",
+    "seats": 2,
+    "note": "",
+    "hero_image": "",
+    "music": "",
+    "opened_at": "2026-09-05T18:46:40.079Z",
+    "open_count": 1,
+    "created_at": "2026-09-01T19:50:12.402Z"
+  }
+},
+{
+  "model": "invitation.rsvp",
+  "pk": 1,
+  "fields": {
+    "wedding": 1,
+    "guest": 1,
+    "name": "Nizomiddin Khalilov",
+    "attending": true,
+    "seats": 1,
+    "phone": "+998888203830",
+    "message": "goo",
+    "created_at": "2026-09-01T19:51:18.217Z"
+  }
+},
+{
+  "model": "invitation.rsvp",
+  "pk": 2,
+  "fields": {
+    "wedding": 1,
+    "guest": 3,
+    "name": "Bekzod",
+    "attending": true,
+    "seats": 1,
+    "phone": "",
+    "message": "",
+    "created_at": "2026-09-01T20:29:19.092Z"
+  }
+},
+{
+  "model": "invitation.guestupload",
+  "pk": 1,
+  "fields": {
+    "wedding": 1,
+    "guest": 3,
+    "uploader_name": "Bekzod",
+    "folder_name": "bekzod-bekzod-curr",
+    "file": "uploads/bekzod-bekzod-curr/0b2e56__photo_2026-06-15_04-42-47.jpg",
+    "original_name": "photo_2026-06-15_04-42-47.jpg",
+    "content_type": "image/jpeg",
+    "size": 71549,
+    "caption": "",
+    "is_video": false,
+    "created_at": "2026-09-01T23:27:54.663Z"
+  }
+},
+{
+  "model": "invitation.guestupload",
+  "pk": 2,
+  "fields": {
+    "wedding": 1,
+    "guest": 3,
+    "uploader_name": "Bekzod",
+    "folder_name": "bekzod-bekzod-curr",
+    "file": "uploads/bekzod-bekzod-curr/9f51c6__Рисунок3.jpg",
+    "original_name": "Рисунок3.jpg",
+    "content_type": "image/jpeg",
+    "size": 165188,
+    "caption": "",
+    "is_video": false,
+    "created_at": "2026-09-01T23:28:09.675Z"
+  }
+},
+{
+  "model": "invitation.guestupload",
+  "pk": 3,
+  "fields": {
+    "wedding": 1,
+    "guest": 3,
+    "uploader_name": "Bekzod",
+    "folder_name": "bekzod-bekzod-curr",
+    "file": "uploads/bekzod-bekzod-curr/da314b__Рисунок2.jpg",
+    "original_name": "Рисунок2.jpg",
+    "content_type": "image/jpeg",
+    "size": 250178,
+    "caption": "",
+    "is_video": false,
+    "created_at": "2026-09-01T23:28:09.694Z"
+  }
+},
+{
+  "model": "invitation.guestupload",
+  "pk": 4,
+  "fields": {
+    "wedding": 1,
+    "guest": 3,
+    "uploader_name": "Bekzod",
+    "folder_name": "bekzod-bekzod-curr",
+    "file": "uploads/bekzod-bekzod-curr/191f71__Рисунок1.jpg",
+    "original_name": "Рисунок1.jpg",
+    "content_type": "image/jpeg",
+    "size": 270016,
+    "caption": "",
+    "is_video": false,
+    "created_at": "2026-09-01T23:28:09.720Z"
+  }
+},
+{
+  "model": "invitation.guestupload",
+  "pk": 5,
+  "fields": {
+    "wedding": 1,
+    "guest": 3,
+    "uploader_name": "Bekzod",
+    "folder_name": "bekzod-bekzod-curr",
+    "file": "uploads/bekzod-bekzod-curr/539b6f__Рисунок5.png",
+    "original_name": "Рисунок5.png",
+    "content_type": "image/png",
+    "size": 414349,
+    "caption": "",
+    "is_video": false,
+    "created_at": "2026-09-01T23:28:09.736Z"
+  }
+},
+{
+  "model": "invitation.guestupload",
+  "pk": 6,
+  "fields": {
+    "wedding": 1,
+    "guest": 3,
+    "uploader_name": "Bekzod",
+    "folder_name": "bekzod-bekzod-curr",
+    "file": "uploads/bekzod-bekzod-curr/da52dc__Рисунок4.png",
+    "original_name": "Рисунок4.png",
+    "content_type": "image/png",
+    "size": 632546,
+    "caption": "",
+    "is_video": false,
+    "created_at": "2026-09-01T23:28:09.754Z"
+  }
+},
+{
+  "model": "invitation.guestupload",
+  "pk": 7,
+  "fields": {
+    "wedding": 1,
+    "guest": 3,
+    "uploader_name": "Bekzod",
+    "folder_name": "bekzod-bekzod-curr",
+    "file": "uploads/bekzod-bekzod-curr/6c3489__Рисунок2.png",
+    "original_name": "Рисунок2.png",
+    "content_type": "image/png",
+    "size": 481624,
+    "caption": "",
+    "is_video": false,
+    "created_at": "2026-09-01T23:28:09.770Z"
+  }
+},
+{
+  "model": "invitation.guestupload",
+  "pk": 8,
+  "fields": {
+    "wedding": 1,
+    "guest": 3,
+    "uploader_name": "Bekzod",
+    "folder_name": "bekzod-bekzod-curr",
+    "file": "uploads/bekzod-bekzod-curr/c9dd93__Рисунок1.png",
+    "original_name": "Рисунок1.png",
+    "content_type": "image/png",
+    "size": 124642,
+    "caption": "",
+    "is_video": false,
+    "created_at": "2026-09-01T23:28:09.781Z"
+  }
+},
+{
+  "model": "invitation.guestupload",
+  "pk": 9,
+  "fields": {
+    "wedding": 1,
+    "guest": 3,
+    "uploader_name": "Bekzod",
+    "folder_name": "bekzod-bekzod-curr",
+    "file": "uploads/bekzod-bekzod-curr/e099f2__img2_20260730_103243_192_168_5_150.jpg",
+    "original_name": "img2_20260730_103243_192_168_5_150.jpg",
+    "content_type": "image/jpeg",
+    "size": 1253143,
+    "caption": "",
+    "is_video": false,
+    "created_at": "2026-09-01T23:28:25.002Z"
+  }
+},
+{
+  "model": "invitation.guestupload",
+  "pk": 10,
+  "fields": {
+    "wedding": 1,
+    "guest": 3,
+    "uploader_name": "Bekzod",
+    "folder_name": "bekzod-bekzod-curr",
+    "file": "uploads/bekzod-bekzod-curr/e6e14e__img0_20260730_103403_192_168_5_167.jpg",
+    "original_name": "img0_20260730_103403_192_168_5_167.jpg",
+    "content_type": "image/jpeg",
+    "size": 242819,
+    "caption": "",
+    "is_video": false,
+    "created_at": "2026-09-01T23:28:25.018Z"
+  }
+},
+{
+  "model": "invitation.guestupload",
+  "pk": 11,
+  "fields": {
+    "wedding": 1,
+    "guest": 3,
+    "uploader_name": "Bekzod",
+    "folder_name": "bekzod-bekzod-curr",
+    "file": "uploads/bekzod-bekzod-curr/a9aa4a__img0_20260730_103708_192_168_5_164.jpg",
+    "original_name": "img0_20260730_103708_192_168_5_164.jpg",
+    "content_type": "image/jpeg",
+    "size": 233803,
+    "caption": "",
+    "is_video": false,
+    "created_at": "2026-09-01T23:28:25.034Z"
+  }
+},
+{
+  "model": "invitation.guestupload",
+  "pk": 12,
+  "fields": {
+    "wedding": 1,
+    "guest": 3,
+    "uploader_name": "Bekzod",
+    "folder_name": "bekzod-bekzod-curr",
+    "file": "uploads/bekzod-bekzod-curr/ca1f0f__thumb_img1_20260730_103710_192_168_5_166.jpg",
+    "original_name": "thumb_img1_20260730_103710_192_168_5_166.jpg",
+    "content_type": "image/jpeg",
+    "size": 19767,
+    "caption": "",
+    "is_video": false,
+    "created_at": "2026-09-01T23:28:25.044Z"
+  }
+},
+{
+  "model": "invitation.guestupload",
+  "pk": 13,
+  "fields": {
+    "wedding": 1,
+    "guest": 3,
+    "uploader_name": "Bekzod",
+    "folder_name": "bekzod-bekzod-curr",
+    "file": "uploads/bekzod-bekzod-curr/b4935a__img1_20260730_104153_192_168_5_151.jpg",
+    "original_name": "img1_20260730_104153_192_168_5_151.jpg",
+    "content_type": "image/jpeg",
+    "size": 1281058,
+    "caption": "",
+    "is_video": false,
+    "created_at": "2026-09-01T23:28:25.073Z"
+  }
+},
+{
+  "model": "invitation.guestupload",
+  "pk": 14,
+  "fields": {
+    "wedding": 1,
+    "guest": 3,
+    "uploader_name": "Bekzod",
+    "folder_name": "bekzod-bekzod-curr",
+    "file": "uploads/bekzod-bekzod-curr/5ee3a3__img0_20260730_104251_192_168_5_164.jpg",
+    "original_name": "img0_20260730_104251_192_168_5_164.jpg",
+    "content_type": "image/jpeg",
+    "size": 270954,
+    "caption": "",
+    "is_video": false,
+    "created_at": "2026-09-01T23:28:25.090Z"
+  }
+},
+{
+  "model": "invitation.guestupload",
+  "pk": 15,
+  "fields": {
+    "wedding": 1,
+    "guest": 3,
+    "uploader_name": "Bekzod",
+    "folder_name": "bekzod-bekzod-curr",
+    "file": "uploads/bekzod-bekzod-curr/aa2267__img1_20260730_104407_192_168_5_152_S4ff7Y6.jpg",
+    "original_name": "img1_20260730_104407_192_168_5_152_S4ff7Y6.jpg",
+    "content_type": "image/jpeg",
+    "size": 1399097,
+    "caption": "",
+    "is_video": false,
+    "created_at": "2026-09-01T23:28:25.117Z"
+  }
+},
+{
+  "model": "invitation.guestupload",
+  "pk": 16,
+  "fields": {
+    "wedding": 1,
+    "guest": 3,
+    "uploader_name": "Bekzod",
+    "folder_name": "bekzod-bekzod-curr",
+    "file": "uploads/bekzod-bekzod-curr/7add96__img0_20260730_104531_192_168_5_168.jpg",
+    "original_name": "img0_20260730_104531_192_168_5_168.jpg",
+    "content_type": "image/jpeg",
+    "size": 233296,
+    "caption": "",
+    "is_video": false,
+    "created_at": "2026-09-01T23:28:25.129Z"
+  }
+},
+{
+  "model": "invitation.guestupload",
+  "pk": 17,
+  "fields": {
+    "wedding": 1,
+    "guest": 3,
+    "uploader_name": "Bekzod",
+    "folder_name": "bekzod-bekzod-curr",
+    "file": "uploads/bekzod-bekzod-curr/78b51f__img1_20260730_105002_192_168_5_151.jpg",
+    "original_name": "img1_20260730_105002_192_168_5_151.jpg",
+    "content_type": "image/jpeg",
+    "size": 1353659,
+    "caption": "",
+    "is_video": false,
+    "created_at": "2026-09-01T23:28:25.154Z"
+  }
+},
+{
+  "model": "invitation.guestupload",
+  "pk": 18,
+  "fields": {
+    "wedding": 1,
+    "guest": 3,
+    "uploader_name": "Bekzod",
+    "folder_name": "bekzod-bekzod-curr",
+    "file": "uploads/bekzod-bekzod-curr/5c0942__thumb_img1_20260730_105007_192_168_5_166.jpg",
+    "original_name": "thumb_img1_20260730_105007_192_168_5_166.jpg",
+    "content_type": "image/jpeg",
+    "size": 19257,
+    "caption": "",
+    "is_video": false,
+    "created_at": "2026-09-01T23:28:25.165Z"
+  }
+},
+{
+  "model": "invitation.guestupload",
+  "pk": 19,
+  "fields": {
+    "wedding": 1,
+    "guest": 3,
+    "uploader_name": "Bekzod",
+    "folder_name": "bekzod-bekzod-curr",
+    "file": "uploads/bekzod-bekzod-curr/5e6ae1__img0_20260730_105008_192_168_5_168.jpg",
+    "original_name": "img0_20260730_105008_192_168_5_168.jpg",
+    "content_type": "image/jpeg",
+    "size": 233373,
+    "caption": "",
+    "is_video": false,
+    "created_at": "2026-09-01T23:28:25.175Z"
+  }
+},
+{
+  "model": "invitation.guestupload",
+  "pk": 20,
+  "fields": {
+    "wedding": 1,
+    "guest": 3,
+    "uploader_name": "Bekzod",
+    "folder_name": "bekzod-bekzod-curr",
+    "file": "uploads/bekzod-bekzod-curr/d43d1e__img2_20260729_141552_192_168_5_150.jpg",
+    "original_name": "img2_20260729_141552_192_168_5_150.jpg",
+    "content_type": "image/jpeg",
+    "size": 1633699,
+    "caption": "",
+    "is_video": false,
+    "created_at": "2026-09-01T23:28:25.204Z"
+  }
+},
+{
+  "model": "invitation.guestupload",
+  "pk": 21,
+  "fields": {
+    "wedding": 1,
+    "guest": 3,
+    "uploader_name": "Bekzod",
+    "folder_name": "bekzod-bekzod-curr",
+    "file": "uploads/bekzod-bekzod-curr/2154b2__img2_20260729_142919_192_168_5_150.jpg",
+    "original_name": "img2_20260729_142919_192_168_5_150.jpg",
+    "content_type": "image/jpeg",
+    "size": 1435061,
+    "caption": "",
+    "is_video": false,
+    "created_at": "2026-09-01T23:28:25.230Z"
+  }
+},
+{
+  "model": "invitation.guestupload",
+  "pk": 22,
+  "fields": {
+    "wedding": 1,
+    "guest": 3,
+    "uploader_name": "Bekzod",
+    "folder_name": "bekzod-bekzod-curr",
+    "file": "uploads/bekzod-bekzod-curr/3d4330__thumb_img1_20260729_142345_192_168_5_151.jpg",
+    "original_name": "thumb_img1_20260729_142345_192_168_5_151.jpg",
+    "content_type": "image/jpeg",
+    "size": 21396,
+    "caption": "",
+    "is_video": false,
+    "created_at": "2026-09-01T23:28:25.241Z"
+  }
+},
+{
+  "model": "invitation.guestupload",
+  "pk": 23,
+  "fields": {
+    "wedding": 1,
+    "guest": 3,
+    "uploader_name": "Bekzod",
+    "folder_name": "bekzod-bekzod-curr",
+    "file": "uploads/bekzod-bekzod-curr/302ffe__thumb_img0_20260729_144416_192_168_5_164.jpg",
+    "original_name": "thumb_img0_20260729_144416_192_168_5_164.jpg",
+    "content_type": "image/jpeg",
+    "size": 16714,
+    "caption": "",
+    "is_video": false,
+    "created_at": "2026-09-01T23:28:25.252Z"
+  }
+},
+{
+  "model": "invitation.guestupload",
+  "pk": 24,
+  "fields": {
+    "wedding": 1,
+    "guest": 3,
+    "uploader_name": "Bekzod",
+    "folder_name": "bekzod-bekzod-curr",
+    "file": "uploads/bekzod-bekzod-curr/7828ac__img1_20260729_144943_192_168_5_150.jpg",
+    "original_name": "img1_20260729_144943_192_168_5_150.jpg",
+    "content_type": "image/jpeg",
+    "size": 1710527,
+    "caption": "",
+    "is_video": false,
+    "created_at": "2026-09-01T23:28:25.277Z"
+  }
+},
+{
+  "model": "invitation.guestupload",
+  "pk": 25,
+  "fields": {
+    "wedding": 1,
+    "guest": 3,
+    "uploader_name": "Bekzod",
+    "folder_name": "bekzod-bekzod-curr",
+    "file": "uploads/bekzod-bekzod-curr/33a214__thumb_img1_20260729_145128_192_168_5_151.jpg",
+    "original_name": "thumb_img1_20260729_145128_192_168_5_151.jpg",
+    "content_type": "image/jpeg",
+    "size": 21095,
+    "caption": "",
+    "is_video": false,
+    "created_at": "2026-09-01T23:28:25.287Z"
+  }
+},
+{
+  "model": "invitation.guestupload",
+  "pk": 26,
+  "fields": {
+    "wedding": 1,
+    "guest": 3,
+    "uploader_name": "Bekzod",
+    "folder_name": "bekzod-bekzod-curr",
+    "file": "uploads/bekzod-bekzod-curr/fc018f__img1_20260729_145133_192_168_5_150_1.jpg",
+    "original_name": "img1_20260729_145133_192_168_5_150 (1).jpg",
+    "content_type": "image/jpeg",
+    "size": 216321,
+    "caption": "",
+    "is_video": false,
+    "created_at": "2026-09-01T23:28:25.300Z"
+  }
+},
+{
+  "model": "invitation.guestupload",
+  "pk": 27,
+  "fields": {
+    "wedding": 1,
+    "guest": 3,
+    "uploader_name": "Bekzod",
+    "folder_name": "bekzod-bekzod-curr",
+    "file": "uploads/bekzod-bekzod-curr/cf497c__thumb_img2_20260729_141638_192_168_5_150.jpg",
+    "original_name": "thumb_img2_20260729_141638_192_168_5_150.jpg",
+    "content_type": "image/jpeg",
+    "size": 21364,
+    "caption": "",
+    "is_video": false,
+    "created_at": "2026-09-01T23:28:25.310Z"
+  }
+},
+{
+  "model": "invitation.guestupload",
+  "pk": 28,
+  "fields": {
+    "wedding": 1,
+    "guest": 3,
+    "uploader_name": "Bekzod",
+    "folder_name": "bekzod-bekzod-curr",
+    "file": "uploads/bekzod-bekzod-curr/6f9cad__img0_20260729_142057_192_168_5_164.jpg",
+    "original_name": "img0_20260729_142057_192_168_5_164.jpg",
+    "content_type": "image/jpeg",
+    "size": 205106,
+    "caption": "",
+    "is_video": false,
+    "created_at": "2026-09-01T23:28:25.319Z"
+  }
+},
+{
+  "model": "invitation.guestupload",
+  "pk": 29,
+  "fields": {
+    "wedding": 1,
+    "guest": 3,
+    "uploader_name": "Bekzod",
+    "folder_name": "bekzod-bekzod-curr",
+    "file": "uploads/bekzod-bekzod-curr/c5fd05__thumb_img2_20260729_142418_192_168_5_150.jpg",
+    "original_name": "thumb_img2_20260729_142418_192_168_5_150.jpg",
+    "content_type": "image/jpeg",
+    "size": 20911,
+    "caption": "",
+    "is_video": false,
+    "created_at": "2026-09-01T23:28:25.329Z"
+  }
+},
+{
+  "model": "invitation.guestupload",
+  "pk": 30,
+  "fields": {
+    "wedding": 1,
+    "guest": null,
+    "uploader_name": "Bekzod",
+    "folder_name": "bekzod-x",
+    "file": "uploads/bekzod-x/098f8a__kamera-2026-09-01-23-35-55.jpg",
+    "original_name": "kamera-2026-09-01-23-35-55.jpg",
+    "content_type": "image/jpeg",
+    "size": 116708,
+    "caption": "",
+    "is_video": false,
+    "created_at": "2026-09-01T23:35:55.598Z"
+  }
+},
+{
+  "model": "invitation.guestupload",
+  "pk": 31,
+  "fields": {
+    "wedding": 1,
+    "guest": null,
+    "uploader_name": "Bekzod",
+    "folder_name": "bekzod-x",
+    "file": "uploads/bekzod-x/c54257__kamera-2026-09-01-23-36-05.jpg",
+    "original_name": "kamera-2026-09-01-23-36-05.jpg",
+    "content_type": "image/jpeg",
+    "size": 115444,
+    "caption": "",
+    "is_video": false,
+    "created_at": "2026-09-01T23:36:05.660Z"
+  }
+},
+{
+  "model": "invitation.guestupload",
+  "pk": 32,
+  "fields": {
+    "wedding": 1,
+    "guest": null,
+    "uploader_name": "Bekzod",
+    "folder_name": "bekzod-x",
+    "file": "uploads/bekzod-x/72b65a__img0_20260728_153513_192_168_5_168.jpg",
+    "original_name": "img0_20260728_153513_192_168_5_168.jpg",
+    "content_type": "image/jpeg",
+    "size": 240347,
+    "caption": "",
+    "is_video": false,
+    "created_at": "2026-09-01T23:36:11.734Z"
+  }
+},
+{
+  "model": "invitation.guestupload",
+  "pk": 33,
+  "fields": {
+    "wedding": 1,
+    "guest": null,
+    "uploader_name": "Bekzod",
+    "folder_name": "bekzod-x",
+    "file": "uploads/bekzod-x/8736a4__kamera-2026-09-03-21-00-29.jpg",
+    "original_name": "kamera-2026-09-03-21-00-29.jpg",
+    "content_type": "image/jpeg",
+    "size": 113351,
+    "caption": "",
+    "is_video": false,
+    "created_at": "2026-09-03T21:00:29.247Z"
+  }
+},
+{
+  "model": "invitation.guestupload",
+  "pk": 34,
+  "fields": {
+    "wedding": 1,
+    "guest": null,
+    "uploader_name": "Bekzod",
+    "folder_name": "bekzod-x",
+    "file": "uploads/bekzod-x/e592de__img0_20260730_105008_192_168_5_168_1.jpg",
+    "original_name": "img0_20260730_105008_192_168_5_168 (1).jpg",
+    "content_type": "image/jpeg",
+    "size": 233373,
+    "caption": "",
+    "is_video": false,
+    "created_at": "2026-09-05T19:35:28.762Z"
+  }
+},
+{
+  "model": "invitation.guestupload",
+  "pk": 35,
+  "fields": {
+    "wedding": 1,
+    "guest": null,
+    "uploader_name": "Bekzod",
+    "folder_name": "bekzod-x",
+    "file": "uploads/bekzod-x/b69646__kamera-2026-09-05-20-16-24.jpg",
+    "original_name": "kamera-2026-09-05-20-16-24.jpg",
+    "content_type": "image/jpeg",
+    "size": 132583,
+    "caption": "",
+    "is_video": false,
+    "created_at": "2026-09-05T20:16:24.807Z"
+  }
+},
+{
+  "model": "invitation.wish",
+  "pk": 1,
+  "fields": {
+    "wedding": 1,
+    "guest": 3,
+    "name": "Bekzod",
+    "text": "all good",
+    "is_visible": false,
+    "created_at": "2026-09-01T20:29:28.524Z"
+  }
+},
+{
+  "model": "invitation.wish",
+  "pk": 2,
+  "fields": {
+    "wedding": 1,
+    "guest": null,
+    "name": "Justin",
+    "text": "baxtli boling jigar\ninstagramdagi like larni qaytarib olingaa)",
+    "is_visible": true,
+    "created_at": "2026-09-05T18:43:47.664Z"
+  }
+},
+{
+  "model": "invitation.dua",
+  "pk": 1,
+  "fields": {
+    "wedding": 1,
+    "title": "Yangi turmush qurganlarga aytiladigan duo",
+    "title_en": "",
+    "arabic": "بَارَكَ اللّٰهُ لَكَ، وَبَارَكَ عَلَيْكَ، وَجَمَعَ بَيْنَكُمَا فِي خَيْرٍ",
+    "transliteration": "Baarokallohu laka va baaroka 'alayka va jama'a baynakumaa fiy xoyr.",
+    "meaning": "Alloh senga baraka bersin, ustingga barakotlarini yog'dirsin va ikkovingizni yaxshilikda jamlasin.",
+    "meaning_en": "May Allah bless you, and shower His blessings upon you, and join the two of you together in goodness.",
+    "source": "Termiziy 1091, Abu Dovud 2123, Ibn Moja 1905",
+    "order": 1,
+    "is_visible": true
+  }
+},
+{
+  "model": "invitation.dua",
+  "pk": 2,
+  "fields": {
+    "wedding": 1,
+    "title": "Oila uchun duo",
+    "title_en": "",
+    "arabic": "رَبَّنَا هَبْ لَنَا مِنْ أَزْوَاجِنَا وَذُرِّيَّاتِنَا قُرَّةَ أَعْيُنٍ وَاجْعَلْنَا لِلْمُتَّقِينَ إِمَامًا",
+    "transliteration": "Robbana hablana min azvajina va zurriyyatina qurrota a'yunin vaj'alna lil-muttaqiyna imama.",
+    "meaning": "Parvardigoro, jufti halollarimiz va zurriyotlarimizdan bizga ko'z quvonchini ato et, bizni taqvodorlarga peshvo qil.",
+    "meaning_en": "Our Lord, grant us from among our spouses and offspring comfort to our eyes, and make us a model for the righteous.",
+    "source": "Furqon surasi, 74-oyat",
+    "order": 2,
+    "is_visible": true
+  }
+}
+]

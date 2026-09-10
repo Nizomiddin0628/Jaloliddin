@@ -583,8 +583,18 @@ function musicPlayer() {
       audio.volume = 0.45;
       try {
         await audio.play();
-        this.playing = true;
+        // Chrome ba'zan xato bermay, ovozsiz ijro qiladi.
+        // Shuning uchun haqiqatan yangrayotganini tekshiramiz.
+        await new Promise((r) => setTimeout(r, 350));
+        if (audio.paused || audio.currentTime === 0) {
+          audio.pause();
+          this.playing = false;
+          this.armFirstTouch();
+        } else {
+          this.playing = true;
+        }
       } catch (e) {
+        this.playing = false;
         this.armFirstTouch();
       }
     },
@@ -592,13 +602,21 @@ function musicPlayer() {
     armFirstTouch() {
       if (this.armed) return;
       this.armed = true;
-      const events = ["pointerdown", "touchstart", "keydown", "scroll"];
+
+      // "scroll" ATAYIN yo'q: sahifa o'zi pastga tushganda ham scroll
+      // hodisasi chiqadi, lekin bu foydalanuvchi harakati emas —
+      // brauzer ijroni rad etadi va tinglovchi behuda sarflanadi.
+      const events = ["pointerdown", "touchstart", "click", "keydown", "wheel"];
 
       const start = async () => {
-        events.forEach((ev) => window.removeEventListener(ev, start));
         try {
           await this.$refs.audio.play();
-          this.playing = true;
+          await new Promise((r) => setTimeout(r, 200));
+          if (!this.$refs.audio.paused) {
+            this.playing = true;
+            // Faqat chindan yangragandan keyin tinglovchilarni olib tashlaymiz
+            events.forEach((ev) => window.removeEventListener(ev, start));
+          }
         } catch (e) {
           this.playing = false;
         }
