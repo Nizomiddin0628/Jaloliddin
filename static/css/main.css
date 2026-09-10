@@ -284,44 +284,19 @@ body:has(.adminbar) .langbar {
 }
 
 /* Keng ekranda vertikal rasm cho'zilib, yuz kesilib qoladi.
-   Shuning uchun kesish nuqtasini yuqoriga suramiz va rasmni
-   biroz kichraytiramiz — kompozitsiya buzilmaydi. */
+   Shuning uchun kesish nuqtasini yuqoriga suramiz va matnni
+   pastga tushiramiz — yuz tepada toza qoladi. */
 @media (min-width: 56rem) {
   .hero__image {
-    /* Kichikroq foiz — rasmning yuqoriroq qismi ko'rinadi.
-       Soch va tepa toza chiqishi uchun 10%. */
+    /* Kichikroq foiz — rasmning yuqoriroq qismi ko'rinadi */
     object-position: center 10%;
     animation: kenburns-wide 34s var(--ease) forwards;
   }
 
   .hero {
     max-height: 100svh;
-    /* Matnni pastga suramiz — yuz tepada toza qoladi */
     justify-content: flex-end;
     padding-bottom: clamp(4rem, 9vh, 7rem);
-  }
-
-  /* Pastdagi to'q parda kuchliroq bo'lsin, matn aniq o'qilsin */
-  .hero--photo .hero__veil {
-    background: linear-gradient(
-      to top,
-      rgba(20, 16, 10, 0.9) 0%,
-      rgba(20, 16, 10, 0.62) 42%,
-      rgba(20, 16, 10, 0.18) 75%,
-      rgba(20, 16, 10, 0.28) 100%
-    );
-  }
-}
-
-  /* Pastdagi to'q parda kuchliroq bo'lsin, matn aniq o'qilsin */
-  .hero--photo .hero__veil {
-    background: linear-gradient(
-      to top,
-      rgba(20, 16, 10, 0.9) 0%,
-      rgba(20, 16, 10, 0.62) 42%,
-      rgba(20, 16, 10, 0.18) 75%,
-      rgba(20, 16, 10, 0.28) 100%
-    );
   }
 }
 
@@ -352,6 +327,21 @@ body:has(.adminbar) .langbar {
     rgba(20, 16, 10, 0.45) 55%,
     rgba(20, 16, 10, 0.3) 100%
   );
+}
+
+/* Keng ekranda matn pastda turadi, shuning uchun pastdagi parda
+   kuchliroq bo'lsin. Bu qoida asosiy qoidadan KEYIN turishi shart —
+   aks holda kuchga kirmaydi. */
+@media (min-width: 56rem) {
+  .hero--photo .hero__veil {
+    background: linear-gradient(
+      to top,
+      rgba(20, 16, 10, 0.9) 0%,
+      rgba(20, 16, 10, 0.62) 42%,
+      rgba(20, 16, 10, 0.18) 75%,
+      rgba(20, 16, 10, 0.28) 100%
+    );
+  }
 }
 
 .hero--plain .hero__veil {

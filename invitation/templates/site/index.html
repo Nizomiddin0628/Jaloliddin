@@ -412,7 +412,9 @@
     <div class="sec__inner appear">
       <h2 class="sec__title">{{ L.upload_title }}</h2>
       {% include "site/_divider.html" %}
-      <p class="lede lede--center" style="margin-bottom:2.25rem">{{ tx.upload_hint|linebreaksbr }}</p>
+      {% if tx.upload_hint %}
+        <p class="lede lede--center" style="margin-bottom:2.25rem">{{ tx.upload_hint|linebreaksbr }}</p>
+      {% endif %}
 
       <div class="field">
         <label for="up-name">{{ L.your_name }}</label>
@@ -423,7 +425,7 @@
            @dragover.prevent="dragging = true"
            @dragleave="dragging = false"
            @drop.prevent="dragging = false; addFiles($event.dataTransfer.files)">
-        <p>{{ L.upload_note }}</p>
+        {% if L.upload_note %}<p>{{ L.upload_note }}</p>{% endif %}
         <div class="btn-row">
           <label class="btn" style="cursor:pointer">
             {{ L.pick_gallery }}
@@ -463,7 +465,7 @@
         </div>
       </template>
 
-      <p class="form-note">{{ L.upload_privacy }}</p>
+      {% if L.upload_privacy %}<p class="form-note">{{ L.upload_privacy }}</p>{% endif %}
     </div>
 
     <div class="cam" x-show="camOpen" x-cloak role="dialog" aria-modal="true">
