@@ -54,9 +54,13 @@
 {# =============================================== BOSH EKRAN #}
 <header class="hero {% if hero_url %}hero--photo{% else %}hero--plain{% endif %}">
   {% if hero_url %}
-    <img class="hero__image" src="{{ hero_url }}" alt="" fetchpriority="high">
+    <div class="hero__media">
+      <img class="hero__image" src="{{ hero_url }}" alt="" fetchpriority="high">
+      <div class="hero__veil"></div>
+    </div>
+  {% else %}
+    <div class="hero__veil"></div>
   {% endif %}
-  <div class="hero__veil"></div>
   {% include "site/_frame.html" %}
   {% include "site/_arch.html" %}
 

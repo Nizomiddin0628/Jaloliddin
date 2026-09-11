@@ -272,43 +272,19 @@ body:has(.adminbar) .langbar {
 }
 
 
-/* Asosiy rasm HECH QACHON kesilmaydi — qanday o'lchamda yuklansa,
-   ekranga butunligicha sig'adi. Tik rasm ham, keng rasm ham. */
-.hero__image {
+.hero__media {
   position: absolute;
   inset: 0;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.hero__image {
   width: 100%;
   height: 100%;
-  object-fit: contain;
+  object-fit: cover;
   object-position: center;
-  z-index: 1;
-  animation: hero-in 1.5s var(--ease) forwards;
-}
-
-@keyframes kenburns-bg {
-  from { transform: scale(1.3); }
-  to { transform: scale(1.2); }
-}
-
-@keyframes hero-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-/* Keng ekranda rasm o'rtada, chetlarda saytning o'z foni */
-@media (min-width: 56rem) {
-  .hero {
-    max-height: 100svh;
-    justify-content: flex-end;
-    padding-bottom: clamp(3rem, 7vh, 5.5rem);
-    background:
-      radial-gradient(70% 55% at 50% 40%, rgba(178, 138, 52, 0.09), transparent 70%),
-      linear-gradient(180deg, var(--ivory) 0%, var(--ivory-2) 100%);
-  }
-
-  /* Rasm chetiga yengil soya — fondan ajralib tursin */
-  .hero--photo .hero__image {
-    box-shadow: 0 0 60px rgba(42, 36, 25, 0.18);
-  }
+  animation: kenburns 30s var(--ease) forwards;
 }
 
 @keyframes kenburns {
@@ -1536,4 +1512,58 @@ body:has(.adminbar) .langbar {
 
 @media (prefers-reduced-motion: reduce) {
   .form-ok { animation: none !important; }
+}
+
+/* ============ KOMPYUTER: chapda rasm, o'ngda matn ============ */
+@media (min-width: 56rem) {
+  .hero--photo {
+    flex-direction: row;
+    align-items: stretch;
+    justify-content: flex-start;
+    padding: 0;
+    background: linear-gradient(180deg, var(--ivory) 0%, var(--ivory-2) 100%);
+  }
+
+  /* Rasm ustuni. Kengroq/torroq qilish uchun 32vw ni o'zgartiring */
+  .hero--photo .hero__media {
+    position: relative;
+    inset: auto;
+    flex: 0 0 32vw;
+    height: 100svh;
+  }
+
+  .hero--photo .hero__image {
+    object-position: center 22%;
+  }
+
+  .hero--photo .hero__veil {
+    display: none;
+  }
+
+  .hero--photo .hero__inner {
+    flex: 1 1 auto;
+    color: var(--ink);
+    text-shadow: none;
+    padding: 2rem clamp(2rem, 5vw, 4rem);
+  }
+
+  .hero--photo .salute__label,
+  .hero--photo .hero__amp,
+  .hero--photo .orn-frame,
+  .hero--photo .chevron {
+    color: var(--gold);
+  }
+
+  .hero--photo .salute__note,
+  .hero--photo .hero__meta {
+    color: var(--ink-soft);
+  }
+
+  .hero--photo .salute__name--big {
+    text-shadow: none;
+  }
+
+  .hero--photo .orn-arch {
+    display: none;
+  }
 }
