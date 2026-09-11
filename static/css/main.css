@@ -281,7 +281,7 @@ body:has(.adminbar) .langbar {
   object-fit: cover;
   object-position: center;
   z-index: 0;
-  filter: blur(26px) brightness(0.88) saturate(1.05);
+  filter: blur(30px) brightness(1) saturate(1.08);
   transform: scale(1.2);
   animation: kenburns-bg 40s var(--ease) forwards;
 }
@@ -342,14 +342,20 @@ body:has(.adminbar) .langbar {
    kuchliroq bo'lsin. Bu qoida asosiy qoidadan KEYIN turishi shart —
    aks holda kuchga kirmaydi. */
 @media (min-width: 56rem) {
+  /* Parda endi butun ekranni emas, faqat matn turgan o'rtani
+     qoraytiradi. Chetlardagi fon rasm toza ko'rinadi. */
   .hero--photo .hero__veil {
-    background: linear-gradient(
-      to top,
-      rgba(20, 16, 10, 0.9) 0%,
-      rgba(20, 16, 10, 0.62) 42%,
-      rgba(20, 16, 10, 0.18) 75%,
-      rgba(20, 16, 10, 0.28) 100%
+    background: radial-gradient(
+      ellipse 34% 62% at 50% 74%,
+      rgba(20, 16, 10, 0.72) 0%,
+      rgba(20, 16, 10, 0.45) 45%,
+      rgba(20, 16, 10, 0) 78%
     );
+  }
+
+  /* Parda yengillashgani uchun matnga o'z soyasini beramiz */
+  .hero--photo .hero__inner {
+    text-shadow: 0 2px 20px rgba(0, 0, 0, 0.6);
   }
 }
 
