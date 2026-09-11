@@ -281,7 +281,7 @@ body:has(.adminbar) .langbar {
   object-fit: cover;
   object-position: center;
   z-index: 0;
-  filter: blur(26px) brightness(0.52) saturate(1.05);
+  filter: blur(26px) brightness(0.88) saturate(1.05);
   transform: scale(1.2);
   animation: kenburns-bg 40s var(--ease) forwards;
 }
