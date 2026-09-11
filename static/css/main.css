@@ -271,20 +271,6 @@ body:has(.adminbar) .langbar {
   background: var(--ivory);
 }
 
-/* Fon — o'sha rasmning xiralashtirilgan nusxasi.
-   Rasm ekranga to'liq sig'maganda chetlar bo'sh qolmaydi. */
-.hero__bg {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: center;
-  z-index: 0;
-  filter: blur(30px) brightness(1) saturate(1.08);
-  transform: scale(1.2);
-  animation: kenburns-bg 40s var(--ease) forwards;
-}
 
 /* Asosiy rasm HECH QACHON kesilmaydi — qanday o'lchamda yuklansa,
    ekranga butunligicha sig'adi. Tik rasm ham, keng rasm ham. */
@@ -308,13 +294,20 @@ body:has(.adminbar) .langbar {
   from { opacity: 0; }
   to { opacity: 1; }
 }
-
-/* Keng ekranda matn pastroqda tursin — yuz ochiq qoladi */
+/* Keng ekranda rasm o'rtada, chetlarda saytning o'z foni */
 @media (min-width: 56rem) {
   .hero {
     max-height: 100svh;
     justify-content: flex-end;
     padding-bottom: clamp(3rem, 7vh, 5.5rem);
+    background:
+      radial-gradient(70% 55% at 50% 40%, rgba(178, 138, 52, 0.09), transparent 70%),
+      linear-gradient(180deg, var(--ivory) 0%, var(--ivory-2) 100%);
+  }
+
+  /* Rasm chetiga yengil soya — fondan ajralib tursin */
+  .hero--photo .hero__image {
+    box-shadow: 0 0 60px rgba(42, 36, 25, 0.18);
   }
 }
 
@@ -346,10 +339,10 @@ body:has(.adminbar) .langbar {
      qoraytiradi. Chetlardagi fon rasm toza ko'rinadi. */
   .hero--photo .hero__veil {
     background: radial-gradient(
-      ellipse 34% 62% at 50% 74%,
-      rgba(20, 16, 10, 0.72) 0%,
-      rgba(20, 16, 10, 0.45) 45%,
-      rgba(20, 16, 10, 0) 78%
+      ellipse 26% 58% at 50% 76%,
+      rgba(20, 16, 10, 0.62) 0%,
+      rgba(20, 16, 10, 0.34) 50%,
+      rgba(20, 16, 10, 0) 80%
     );
   }
 
@@ -1468,7 +1461,6 @@ body:has(.adminbar) .langbar {
   .timeline::before { transform: scaleY(1) !important; }
   .timeline li::before { transform: scale(1) !important; }
   .hero__image,
-  .hero__bg,
   .hero--plain .hero__veil,
   .chevron { animation: none !important; }
   * { transition-duration: 0.01ms !important; }
