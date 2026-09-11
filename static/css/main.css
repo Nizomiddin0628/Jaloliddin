@@ -1561,3 +1561,25 @@ body:has(.adminbar) .langbar {
   .form-ok { animation: none !important; }
 }
 
+/* ============ TELEFON ============ */
+@media (max-width: 55.99rem) {
+  .hero__media {
+    display: grid;
+    place-items: center;
+  }
+
+  /* Rasm ekran kengligiga moslashadi — qo'llar ham ko'rinadi */
+  .hero__image {
+    position: static;
+    width: 100%;
+    height: auto;
+    max-height: 100%;
+    object-fit: contain;
+  }
+
+  /* Matn pastga tushmasin — u faqat kompyuter uchun edi */
+  .hero--photo .hero__inner {
+    transform: none;
+  }
+}
+
