@@ -281,6 +281,18 @@ body:has(.adminbar) .langbar {
   max-height: 100%;
   z-index: 0;
   overflow: hidden;
+  display: grid;
+  place-items: center;
+}
+
+/* Telefonda rasm ekran kengligini to'liq egallaydi */
+@media (max-width: 55.99rem) {
+  .hero__image {
+    position: static;
+    width: 100%;
+    height: auto;
+    max-height: 100%;
+  }
 }
 
 /* Chetlar uchun fon — o'sha rasmning kattalashtirilgan, xira nusxasi */
@@ -358,7 +370,7 @@ body:has(.adminbar) .langbar {
      kerak bo'lsa 14vh ni oshiring. */
   .hero--photo .hero__inner {
     text-shadow: 0 2px 20px rgba(0, 0, 0, 0.6);
-    transform: translateY(14vh);
+    transform: translateY(24vh);
   }
 }
 
