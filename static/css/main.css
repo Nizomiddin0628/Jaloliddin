@@ -1577,9 +1577,10 @@ body:has(.adminbar) .langbar {
     object-fit: contain;
   }
 
-  /* Matn pastga tushmasin — u faqat kompyuter uchun edi */
+  /* Telefonda matn yuqoriroqda tursin.
+     Ko'proq ko'tarish kerak bo'lsa -10vh ni -16vh qiling. */
   .hero--photo .hero__inner {
-    transform: none;
+    transform: translateY(-10vh);
   }
 }
 
