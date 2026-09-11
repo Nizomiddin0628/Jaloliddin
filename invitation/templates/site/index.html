@@ -54,6 +54,7 @@
 {# =============================================== BOSH EKRAN #}
 <header class="hero {% if hero_url %}hero--photo{% else %}hero--plain{% endif %}">
   {% if hero_url %}
+    <img class="hero__bg" src="{{ hero_url }}" alt="" aria-hidden="true">
     <img class="hero__image" src="{{ hero_url }}" alt="" fetchpriority="high">
   {% endif %}
   <div class="hero__veil"></div>

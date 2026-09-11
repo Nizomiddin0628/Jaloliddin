@@ -271,41 +271,50 @@ body:has(.adminbar) .langbar {
   background: var(--ivory);
 }
 
-.hero__image {
+/* Fon — o'sha rasmning xiralashtirilgan nusxasi.
+   Rasm ekranga to'liq sig'maganda chetlar bo'sh qolmaydi. */
+.hero__bg {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
-  /* Telefonda rasm markazdan kesiladi — vertikal rasm shunda to'g'ri chiqadi */
   object-position: center;
   z-index: 0;
-  animation: kenburns 30s var(--ease) forwards;
+  filter: blur(26px) brightness(0.52) saturate(1.05);
+  transform: scale(1.2);
+  animation: kenburns-bg 40s var(--ease) forwards;
 }
 
-/* Keng ekranda vertikal rasm cho'zilib, yuz kesilib qoladi.
-   Shuning uchun kesish nuqtasini yuqoriga suramiz va matnni
-   pastga tushiramiz — yuz tepada toza qoladi. */
-@media (min-width: 56rem) {
-  .hero__image {
-    /* Kichikroq foiz — rasmning yuqoriroq qismi ko'rinadi */
-    object-position: center 10%;
-    animation: kenburns-wide 34s var(--ease) forwards;
-  }
+/* Asosiy rasm HECH QACHON kesilmaydi — qanday o'lchamda yuklansa,
+   ekranga butunligicha sig'adi. Tik rasm ham, keng rasm ham. */
+.hero__image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center;
+  z-index: 1;
+  animation: hero-in 1.5s var(--ease) forwards;
+}
 
+@keyframes kenburns-bg {
+  from { transform: scale(1.3); }
+  to { transform: scale(1.2); }
+}
+
+@keyframes hero-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Keng ekranda matn pastroqda tursin — yuz ochiq qoladi */
+@media (min-width: 56rem) {
   .hero {
     max-height: 100svh;
     justify-content: flex-end;
-    padding-bottom: clamp(4rem, 9vh, 7rem);
-  }
-}
-
-@keyframes kenburns-wide {
-  from {
-    transform: scale(1.08);
-  }
-  to {
-    transform: scale(1);
+    padding-bottom: clamp(3rem, 7vh, 5.5rem);
   }
 }
 
@@ -317,7 +326,7 @@ body:has(.adminbar) .langbar {
 .hero__veil {
   position: absolute;
   inset: 0;
-  z-index: 1;
+  z-index: 2;
 }
 
 .hero--photo .hero__veil {
@@ -1453,6 +1462,7 @@ body:has(.adminbar) .langbar {
   .timeline::before { transform: scaleY(1) !important; }
   .timeline li::before { transform: scale(1) !important; }
   .hero__image,
+  .hero__bg,
   .hero--plain .hero__veil,
   .chevron { animation: none !important; }
   * { transition-duration: 0.01ms !important; }
