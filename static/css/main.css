@@ -1303,7 +1303,7 @@ body:has(.adminbar) .langbar {
 }
 
 .queue__state--ok { color: var(--gold-deep); }
-.queue__state--err { color: #a8422a; }
+.queue__state--err { color: #a13e27; }
 
 .bar {
   height: 2px;
