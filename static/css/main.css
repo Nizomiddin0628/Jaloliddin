@@ -1534,7 +1534,7 @@ body:has(.adminbar) .langbar {
 }
 
 .sec--dark .navbtn {
-  border-color: rgba(246, 239, 225, 0.32);
+  border-color: rgb(246 249 225 / 0.32);
   color: var(--cream);
 }
 
