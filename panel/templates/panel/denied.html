@@ -1,0 +1,11 @@
+{% extends "panel/base.html" %}
+{% load panel_tags %}
+{% block title %}Ruxsat yo'q{% endblock %}
+{% block heading %}Ruxsat yo'q{% endblock %}
+{% block content %}
+<div class="empty rise">
+  <svg class="empty__ic" width="56" height="56"><use href="#p-eyeoff"/></svg>
+  <p>Bu bo'limga kirish uchun hisobingizga ruxsat berilmagan. Sayt egasidan so'rang.</p>
+  <a class="btn btn--ghost" href="{% url 'panel:home' %}">Bosh sahifaga qaytish</a>
+</div>
+{% endblock %}

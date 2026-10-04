@@ -1,0 +1,63 @@
+{% extends "panel/base.html" %}
+{% load panel_tags %}
+{% block title %}Tilaklar{% endblock %}
+{% block heading %}Tilaklar{% endblock %}
+{% block content %}
+<div x-data="wishesPage({{ counts.wait }})">
+<header class="page-head rise">
+  <div>
+    <h2 class="page-title">Tilaklar</h2>
+    <p class="page-sub">
+      {% if w.wishes_need_approval %}Yangi tilaklar siz tasdiqlaguningizcha saytda ko'rinmaydi.
+      {% else %}Tilaklar darhol saytda chiqadi. Tekshirishni bosh sahifadan yoqishingiz mumkin.{% endif %}
+    </p>
+  </div>
+  {% if counts.wait and perms.invitation.change_wish %}
+    <div class="page-actions">
+      <form method="post" action="{% url 'panel:wishes-approve-all' %}">{% csrf_token %}
+        <button class="btn btn--primary" type="submit">{% icon "check" %} Hammasini tasdiqlash ({{ counts.wait }})</button>
+      </form>
+    </div>
+  {% endif %}
+</header>
+
+<div class="toolbar rise" style="--d:1">
+  <nav class="chips">
+    {% for key, label in filters %}
+      <a href="?f={{ key }}" class="chip {% if f == key %}is-on{% endif %}">{{ label }}
+        <em {% if key == 'wait' %}x-text="pending"{% endif %}>{% if key == 'wait' %}{{ counts.wait }}{% elif key == 'shown' %}{{ counts.shown }}{% else %}{{ counts.all }}{% endif %}</em>
+      </a>
+    {% endfor %}
+  </nav>
+</div>
+
+{% if items %}
+  <div class="wgrid">
+    {% for x in items %}
+      <article class="wcard rise {% if not x.is_visible %}is-pending{% endif %}" style="--d: {{ forloop.counter0|add:2 }}" data-row
+               x-data="{ visible: {{ x.is_visible|yesno:'true,false' }} }" :class="{ 'is-pending': !visible }">
+        <span class="wcard__flag" x-show="!visible">Tasdiq kutmoqda</span>
+        <p class="wcard__text">{{ x.text|linebreaksbr }}</p>
+        <footer class="wcard__foot">
+          <span class="wcard__from"><b>{{ x.name }}</b><small>{{ x.created_at|oldin }}</small></span>
+          <span class="wcard__acts">
+            {% if perms.invitation.change_wish %}
+              <button type="button" class="btn btn--sm btn--primary" x-show="!visible" @click="act($event, '{% url 'panel:wish-action' x.pk %}', 'show', $data)">{% icon "check" 16 %} Tasdiqlash</button>
+              <button type="button" class="btn btn--sm btn--ghost" x-show="visible" @click="act($event, '{% url 'panel:wish-action' x.pk %}', 'hide', $data)">{% icon "eyeoff" 16 %} Yashirish</button>
+            {% endif %}
+            {% if perms.invitation.delete_wish %}
+              <button type="button" class="icon-btn icon-btn--danger" title="O'chirish" @click="act($event, '{% url 'panel:wish-action' x.pk %}', 'delete', $data)">{% icon "trash" 18 %}</button>
+            {% endif %}
+          </span>
+        </footer>
+      </article>
+    {% endfor %}
+  </div>
+{% else %}
+  <div class="empty rise" style="--d:2">
+    <svg class="empty__ic" width="56" height="56"><use href="#p-heart"/></svg>
+    <p>{% if f == 'wait' %}Tasdiq kutayotgan tilak yo'q. Hammasi ko'rib chiqilgan.{% else %}Hali tilak yo'q.{% endif %}</p>
+  </div>
+{% endif %}
+</div>
+{% endblock %}

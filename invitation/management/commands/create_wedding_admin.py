@@ -18,6 +18,7 @@ MODEL_PERMS = {
     "rsvp": ["view", "delete"],
     "guestupload": ["view", "delete"],
     "wish": ["view", "change", "delete"],
+    "dua": ["view", "add", "change", "delete"],
 }
 
 
@@ -31,8 +32,9 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         username = options["username"]
-        if User.objects.filter(username=username).exists():
-            raise CommandError(f"'{username}' allaqachon mavjud.")
+        existing = User.objects.filter(username=username).first()
+        if existing and existing.is_superuser:
+            raise CommandError(f"'{username}' allaqachon super admin.")
 
         group, _ = Group.objects.get_or_create(name=GROUP_NAME)
         perms = []
@@ -46,15 +48,22 @@ class Command(BaseCommand):
                     perms.append(perm)
         group.permissions.set(perms)
 
-        user = User.objects.create_user(
-            username=username,
-            password=options["password"],
-            email=options["email"],
-            is_staff=True,
-            is_superuser=False,
-        )
+        # Buyruqni qayta ishga tushirsangiz — yangi ruxsatlar va parol beriladi
+        if existing:
+            user = existing
+            user.set_password(options["password"])
+            user.is_staff = True
+            user.save()
+        else:
+            user = User.objects.create_user(
+                username=username,
+                password=options["password"],
+                email=options["email"],
+                is_staff=True,
+                is_superuser=False,
+            )
         user.groups.add(group)
 
         self.stdout.write(self.style.SUCCESS(f"'{username}' admin sifatida yaratildi."))
         self.stdout.write(f"Ruxsatlar: {len(perms)} ta. Guruh: {GROUP_NAME}")
-        self.stdout.write("Kirish manzili: /admin/")
+        self.stdout.write("Kirish manzili: /panel/")

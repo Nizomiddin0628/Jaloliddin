@@ -1,0 +1,47 @@
+{% extends "panel/base.html" %}
+{% load panel_tags %}
+{% block title %}Esdaliklar{% endblock %}
+{% block heading %}Esdaliklar{% endblock %}
+{% block content %}
+<header class="page-head rise">
+  <div>
+    <h2 class="page-title">Esdaliklar <span class="count">{{ total_files }}</span></h2>
+    <p class="page-sub">Mehmonlar to'ydan keyin yuklagan rasm va videolar. Asl sifatida saqlanadi, faqat siz ko'rasiz.{% if total_files %} Jami {{ total_mb }} MB.{% endif %}</p>
+  </div>
+  {% if total_files %}
+  <div class="page-actions">
+    <a class="btn btn--primary" href="{% url 'uploads-download-all' %}">{% icon "download" %} Hammasini ZIP qilib olish</a>
+  </div>
+  {% endif %}
+</header>
+
+{% if w and not w.uploads_open %}
+  <a class="alert alert--soft rise" style="--d:1" href="{% url 'panel:home' %}">
+    <span class="alert__ic">{% icon "upload" %}</span>
+    <span>Rasm yuklash hozir <b>yopiq</b>. To'ydan keyin bosh sahifadagi «Rasm yuklash» tugmasini yoqing.</span>
+  </a>
+{% endif %}
+
+{% if cards %}
+  <div class="fgrid">
+    {% for c in cards %}
+      <a class="fcard rise" style="--d: {{ forloop.counter0|add:2 }}" href="{% url 'panel:uploads-folder' c.folder %}">
+        <span class="fcard__cover">
+          {% if c.cover %}<img src="{% url 'upload-serve' c.cover.pk %}" alt="" loading="lazy">{% else %}{% icon "play" 34 %}{% endif %}
+          <em class="fcard__count">{{ c.count }}</em>
+        </span>
+        <span class="fcard__body">
+          <b>{{ c.name }}</b>
+          <small>{% if c.photos %}{{ c.photos }} rasm{% endif %}{% if c.photos and c.videos %} · {% endif %}{% if c.videos %}{{ c.videos }} video{% endif %} · {{ c.size_mb }} MB</small>
+          <small>{{ c.last_at|oldin }}</small>
+        </span>
+      </a>
+    {% endfor %}
+  </div>
+{% else %}
+  <div class="empty rise" style="--d:2">
+    <svg class="empty__ic" width="56" height="56"><use href="#p-upload"/></svg>
+    <p>Hali hech kim fayl yuklamagan.</p>
+  </div>
+{% endif %}
+{% endblock %}

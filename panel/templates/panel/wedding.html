@@ -1,0 +1,86 @@
+{% extends "panel/base.html" %}
+{% load panel_tags %}
+{% block title %}To'y ma'lumotlari{% endblock %}
+{% block heading %}To'y ma'lumotlari{% endblock %}
+{% block content %}
+<form method="post" enctype="multipart/form-data" class="wform"
+      x-data="{ tab: '{{ tab }}', dirty: false }" @input="dirty = true" @change="dirty = true"
+      x-init="{% for s in form.sections %}{% if s.has_errors %}tab = '{{ s.key }}';{% endif %}{% endfor %}">
+  {% csrf_token %}
+  <input type="hidden" name="tab" :value="tab">
+
+  <header class="page-head rise">
+    <div>
+      <h2 class="page-title">To'y ma'lumotlari</h2>
+      <p class="page-sub">Shu yerda yozganingiz taklifnomada darhol ko'rinadi. Inglizcha maydonlar ixtiyoriy.</p>
+    </div>
+    <div class="page-actions">
+      <a class="btn btn--ghost" href="/" target="_blank">{% icon "external" %} Saytda ko'rish</a>
+    </div>
+  </header>
+
+  <nav class="tabs-line rise" style="--d:1" role="tablist">
+    {% for s in form.sections %}
+      <button type="button" role="tab" :class="{ 'is-on': tab === '{{ s.key }}' }" @click="tab = '{{ s.key }}'"
+              class="{% if s.has_errors %}has-error{% endif %}">{{ s.title }}{% if s.has_errors %} <i class="dot"></i>{% endif %}</button>
+    {% endfor %}
+  </nav>
+
+  <fieldset class="plain" {% if not can_edit %}disabled{% endif %}>
+  {% for s in form.sections %}
+    <section class="card tabpane" x-show="tab === '{{ s.key }}'" {% if s.key != tab %}x-cloak{% endif %}
+             x-transition:enter="pane-in" x-transition:enter-start="pane-from" x-transition:enter-end="pane-to">
+      {% if s.key == 'asosiy' %}
+        <div class="grid2">
+          {% include "panel/_field.html" with f=form.groom_name %}
+          {% include "panel/_field.html" with f=form.bride_name %}
+        </div>
+        <div class="grid2">
+          {% include "panel/_field.html" with f=form.event_at %}
+          {% include "panel/_field.html" with f=form.welcome_time %}
+        </div>
+        <div class="grid2">
+          {% include "panel/_field.html" with f=form.venue_name %}
+          {% include "panel/_field.html" with f=form.venue_address %}
+        </div>
+        {% include "panel/_field.html" with f=form.map_url %}
+        <div class="grid2">
+          {% include "panel/_field.html" with f=form.latitude %}
+          {% include "panel/_field.html" with f=form.longitude %}
+        </div>
+      {% elif s.key == 'aloqa' %}
+        <p class="hint">Sahifa pastida «Savollar bo'lsa, qo'ng'iroq qiling» degan tugmalar bo'lib chiqadi.</p>
+        <div class="grid2">
+          {% include "panel/_field.html" with f=form.contact_one_name %}
+          {% include "panel/_field.html" with f=form.contact_one_phone %}
+        </div>
+        <div class="grid2">
+          {% include "panel/_field.html" with f=form.contact_two_name %}
+          {% include "panel/_field.html" with f=form.contact_two_phone %}
+        </div>
+      {% elif s.key == 'media' %}
+        <div class="grid2">
+          {% for f in s.fields %}{% include "panel/_field.html" %}{% endfor %}
+        </div>
+        <p class="hint">Galereyadagi rasmlar alohida — «Galereya» bo'limida.</p>
+      {% elif s.key == 'en' %}
+        <p class="hint">Mehmon EN tugmasini bossa shu matnlar chiqadi. Bo'sh qolgan maydon o'rniga o'zbekchasi ko'rsatiladi.</p>
+        <div class="grid2">
+          {% for f in s.fields %}{% include "panel/_field.html" %}{% endfor %}
+        </div>
+      {% else %}
+        {% if s.key == 'keyin' %}<p class="hint">Bosh sahifadagi «Rahmat sahifasi» rejimi yoqilganda shu matnlar ko'rinadi.</p>{% endif %}
+        {% for f in s.fields %}{% include "panel/_field.html" %}{% endfor %}
+      {% endif %}
+    </section>
+  {% endfor %}
+  </fieldset>
+
+  {% if can_edit %}
+  <div class="savebar" :class="{ 'is-dirty': dirty }">
+    <span class="savebar__note" x-text="dirty ? 'O\'zgarishlar saqlanmagan' : 'Hammasi saqlangan'">Hammasi saqlangan</span>
+    <button class="btn btn--primary" type="submit">{% icon "check" %} Saqlash</button>
+  </div>
+  {% endif %}
+</form>
+{% endblock %}

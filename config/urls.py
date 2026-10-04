@@ -12,6 +12,7 @@ admin.site.index_title = "Boshqaruv paneli"
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/", include("invitation.urls")),
+    path("panel/", include("panel.urls")),
     # Taklifnoma sahifasi — saytning ildizi
     path("", invitation_views.invitation_page, name="invitation-page"),
 ]

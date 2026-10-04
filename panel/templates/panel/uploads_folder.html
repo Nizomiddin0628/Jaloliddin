@@ -1,0 +1,50 @@
+{% extends "panel/base.html" %}
+{% load panel_tags %}
+{% block title %}{{ name }}{% endblock %}
+{% block heading %}{{ name }}{% endblock %}
+{% block content %}
+<div x-data="viewer()" @keydown.escape.window="close()" @keydown.arrow-right.window="step(1)" @keydown.arrow-left.window="step(-1)">
+<a class="back" href="{% url 'panel:uploads' %}">{% icon "left" 18 %} Barcha esdaliklar</a>
+
+<header class="page-head rise">
+  <div>
+    <h2 class="page-title">{{ name }} <span class="count">{{ count }}</span></h2>
+    <p class="page-sub">{{ size_mb }} MB · rasmni bossangiz kattalashadi.</p>
+  </div>
+  <div class="page-actions">
+    <a class="btn btn--primary" href="{% url 'uploads-download-folder' folder %}">{% icon "download" %} ZIP qilib olish</a>
+  </div>
+</header>
+
+<ul class="mgrid">
+  {% for it in items %}
+    <li class="mcard rise" style="--d: {{ forloop.counter0|add:1 }}" data-row>
+      <button type="button" class="mcard__open" data-src="{% url 'upload-serve' it.pk %}" data-video="{{ it.is_video|yesno:'1,0' }}" @click="open({{ forloop.counter0 }})">
+        {% if it.is_video %}
+          <video src="{% url 'upload-serve' it.pk %}#t=0.5" preload="metadata" muted playsinline></video>
+          <span class="mcard__play">{% icon "play" 22 %}</span>
+        {% else %}
+          <img src="{% url 'upload-serve' it.pk %}" alt="" loading="lazy">
+        {% endif %}
+      </button>
+      <div class="mcard__foot">
+        <span class="mcard__name" title="{{ it.original_name }}">{{ it.original_name }}</span>
+        <a class="icon-btn icon-btn--sm" href="{% url 'upload-download' it.pk %}" title="Yuklab olish">{% icon "download" 16 %}</a>
+        {% if perms.invitation.delete_guestupload %}
+          <button type="button" class="icon-btn icon-btn--sm icon-btn--danger" title="O'chirish"
+                  @click="confirmDelete($event, '{% url 'panel:upload-delete' it.pk %}', '{{ it.original_name|escapejs }}')">{% icon "trash" 16 %}</button>
+        {% endif %}
+      </div>
+    </li>
+  {% endfor %}
+</ul>
+
+<div class="viewer" x-show="i !== null" x-cloak x-transition.opacity @click.self="close()">
+  <button type="button" class="viewer__btn viewer__x" @click="close()" aria-label="Yopish">{% icon "x" 24 %}</button>
+  <button type="button" class="viewer__btn viewer__prev" @click="step(-1)" aria-label="Oldingi">{% icon "left" 24 %}</button>
+  <template x-if="cur && cur.video"><video :src="cur.src" controls autoplay playsinline></video></template>
+  <template x-if="cur && !cur.video"><img :src="cur.src" alt=""></template>
+  <button type="button" class="viewer__btn viewer__next" @click="step(1)" aria-label="Keyingi">{% icon "right" 24 %}</button>
+</div>
+</div>
+{% endblock %}

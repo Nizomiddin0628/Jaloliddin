@@ -1,10 +1,10 @@
 {% load static %}<!doctype html>
-<html lang="{{ lang }}">
+<html lang="{{ lang }}" class="no-js">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="robots" content="noindex, nofollow">
-  <meta name="theme-color" content="#fbf7ef">
+  <meta name="theme-color" content="#ffffff">
   <title>{{ tx.groom }} &amp; {{ tx.bride }}</title>
   <meta name="description" content="{{ event_date }} · {{ tx.venue_name }}">
 
@@ -13,14 +13,16 @@
   <meta property="og:description" content="{{ event_date }} · {{ tx.venue_name }}">
   {% if hero_url %}
     <meta property="og:image" content="{{ site_url }}{{ hero_url }}">
+    <link rel="preload" as="image" href="{{ hero_url }}">
   {% endif %}
   <meta name="twitter:card" content="summary_large_image">
 
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Karla:wght@400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="{% static 'css/main.css' %}">
+  <link rel="preload" href="{% static 'fonts/jost-latin-wght-normal.woff2' %}" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="{% static 'fonts/manrope-latin-wght-normal.woff2' %}" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="{% static 'css/site.css' %}">
+  <script>document.documentElement.classList.replace("no-js", "js");</script>
 
+  {{ L|json_script:"ui-text" }}
   <script>
     window.TAKLIFNOMA = {
       eventIso: "{{ event_iso }}",
@@ -31,209 +33,228 @@
       wishes: {{ wishes_json|safe }},
       csrfToken: "{{ csrf_token }}",
       lang: "{{ lang }}",
-      wishPending: "{{ L.wish_pending|escapejs }}",
-      wishAdded: "{{ L.wish_added|escapejs }}"
+      title: "{{ tx.groom|escapejs }} & {{ tx.bride|escapejs }}",
+      place: "{{ tx.venue_name|escapejs }}{% if tx.venue_address %}, {{ tx.venue_address|escapejs }}{% endif %}",
+      mode: "{{ w.mode }}"
     };
   </script>
 </head>
-<body>
+<body class="mode-{{ w.mode }}">
+{% include "site/_sprite.html" %}
+
+{# ================================================================ KIRISH PARDASI #}
+<div class="intro" x-data="intro()" :class="{ 'is-opening': opening, 'is-gone': gone }">
+  <div class="intro__panel intro__panel--top"></div>
+  <div class="intro__panel intro__panel--bottom"></div>
+  <div class="intro__content">
+    <span class="intro__mono" aria-hidden="true">
+      <span>{{ initials|slice:":1" }}</span><i></i><span>{{ initials|slice:"1:" }}</span>
+    </span>
+    {% if guest %}
+      <p class="intro__dear">{{ L.dear }}</p>
+      <p class="intro__name">{{ guest.display_name }}</p>
+    {% else %}
+      <p class="intro__name">{{ tx.groom }} &amp; {{ tx.bride }}</p>
+    {% endif %}
+    <p class="intro__note">{% if w.mode == 'thanks' %}{{ tx.thanks_title }}{% else %}{{ L.you_are_invited }}{% endif %}</p>
+    <button type="button" class="intro__btn" @click="open()" :disabled="opening">
+      <span>{% if w.mode == 'thanks' %}{{ L.open_thanks }}{% else %}{{ L.open_invite }}{% endif %}</span>
+      <svg><use href="#i-arrow"/></svg>
+    </button>
+  </div>
+</div>
 
 {% if user.is_staff %}
-  <a class="adminbar" href="{% url 'admin:index' %}">{{ L.admin_panel }}</a>
+  <a class="adminbar" href="{% url 'panel:home' %}"><svg><use href="#i-panel"/></svg>{{ L.admin_panel }}</a>
 {% endif %}
 
-{% if w.show_english %}
-  <nav class="langbar" aria-label="Til">
-    <a class="langlink {% if lang == 'uz' %}is-on{% endif %}" href="{{ link_uz }}"
-       {% if lang == 'uz' %}aria-current="true"{% endif %}>UZ</a>
-    <a class="langlink {% if lang == 'en' %}is-on{% endif %}" href="{{ link_en }}"
-       {% if lang == 'en' %}aria-current="true"{% endif %}>EN</a>
-  </nav>
-{% endif %}
-
-{# =============================================== BOSH EKRAN #}
-<header class="hero {% if hero_url %}hero--photo{% else %}hero--plain{% endif %}">
-  {% if hero_url %}
-    <div class="hero__media">
-      <img class="hero__bg" src="{{ hero_url }}" alt="" aria-hidden="true">
-      <img class="hero__image" src="{{ hero_url }}" alt="" fetchpriority="high">
-      <div class="hero__veil"></div>
-    </div>
-  {% else %}
-    <div class="hero__veil"></div>
-  {% endif %}
-  {% include "site/_frame.html" %}
-  {% include "site/_arch.html" %}
-
-  <div class="hero__inner reveal">
+{# ================================================================ TEPADAGI PANEL #}
+<header class="topnav" data-topnav>
+  <a class="topnav__mark" href="#bosh">{{ tx.groom }} <span>&amp;</span> {{ tx.bride }}</a>
+  <nav class="topnav__links" aria-label="Bo'limlar">
     {% if w.mode == 'thanks' %}
-      <div class="salute">
-        {% if guest %}
-          <span class="salute__label">{{ L.dear }}</span>
-          <span class="salute__name">{{ guest.display_name }}</span>
-        {% endif %}
-      </div>
-      <h1 class="hero__names hero__names--short">{{ tx.thanks_title }}</h1>
-      {% if tx.thanks_text %}
-        <div class="hero__meta hero__meta--block">{{ tx.thanks_text|linebreaksbr }}</div>
-      {% endif %}
+      {% if gallery %}<a href="#rasmlar" data-nav="rasmlar">{{ L.nav_photos }}</a>{% endif %}
+      <a href="#tilaklar" data-nav="tilaklar">{{ L.nav_wishes }}</a>
+      {% if w.uploads_open %}<a href="#yuklash" data-nav="yuklash">{{ L.nav_upload }}</a>{% endif %}
     {% else %}
-      <div class="salute">
-        {% if guest %}
-          <span class="salute__label">{{ L.dear }}</span>
-          <span class="salute__name salute__name--big">{{ guest.display_name }}</span>
-          <span class="salute__note">{{ L.greeting_note }}</span>
-        {% else %}
-          <span class="salute__label">{{ L.generic_label }}</span>
-          <span class="salute__name">{{ L.generic_name }}</span>
-        {% endif %}
-      </div>
-      <h1 class="hero__names">
-        {{ tx.groom }}<span class="hero__amp">&amp;</span>{{ tx.bride }}
-      </h1>
-      <div class="hero__meta">
-        <span>{{ event_date }}</span>
-        <span>{{ tx.venue_name }}</span>
+      <a href="#vaqt" data-nav="vaqt">{{ L.nav_time }}</a>
+      {% if gallery %}<a href="#rasmlar" data-nav="rasmlar">{{ L.nav_photos }}</a>{% endif %}
+      <a href="#manzil" data-nav="manzil">{{ L.nav_place }}</a>
+      <a href="#tilaklar" data-nav="tilaklar">{{ L.nav_wishes }}</a>
+      {% if w.rsvp_open %}<a href="#javob" data-nav="javob" class="topnav__cta">{{ L.nav_rsvp }}</a>{% endif %}
+    {% endif %}
+  </nav>
+  <div class="topnav__tools">
+    {% if w.show_english %}
+      <nav class="lang" aria-label="Til">
+        <a class="lang__a {% if lang == 'uz' %}is-on{% endif %}" href="{{ link_uz }}">UZ</a>
+        <a class="lang__a {% if lang == 'en' %}is-on{% endif %}" href="{{ link_en }}">EN</a>
+      </nav>
+    {% endif %}
+    {% if music_url %}
+      <div x-data="musicPlayer()">
+        <audio x-ref="audio" src="{{ music_url }}" loop preload="auto"></audio>
+        <button class="music" type="button" @click="toggle()" :class="{ 'is-on': playing }"
+                :aria-label="playing ? T.music_off : T.music_on" aria-label="{{ L.music_on }}">
+          <span class="music__bars" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+        </button>
       </div>
     {% endif %}
   </div>
-
-  <div class="chevron" aria-hidden="true">
-    <svg viewBox="0 0 24 14" fill="none"><path d="M2 2 L12 12 L22 2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
-  </div>
 </header>
 
-<main>
+{# ================================================================ BOSH EKRAN #}
+<section class="hero {% if not hero_url %}hero--plain{% endif %}" id="bosh">
+  {% if hero_url %}
+    <div class="hero__media"><img src="{{ hero_url }}" alt="{{ tx.groom }} &amp; {{ tx.bride }}" fetchpriority="high"></div>
+  {% endif %}
+  <div class="hero__shade" aria-hidden="true"></div>
+
+  <div class="hero__content">
+    {% if guest %}<p class="hero__hi">{{ L.dear }} {{ guest.display_name }}</p>{% endif %}
+    {% if w.mode == 'thanks' %}
+      <h1 class="hero__title" data-lines>{{ tx.thanks_title }}</h1>
+      {% if tx.thanks_text %}<p class="hero__lede">{{ tx.thanks_text|linebreaksbr }}</p>{% endif %}
+    {% else %}
+      <h1 class="hero__names" aria-label="{{ tx.groom }} &amp; {{ tx.bride }}">
+        <span class="mask"><span>{{ tx.groom }}</span></span>
+        <span class="mask hero__amp"><span>&amp;</span></span>
+        <span class="mask"><span>{{ tx.bride }}</span></span>
+      </h1>
+      <p class="hero__meta">
+        <span>{{ event_date }}</span>
+        <span class="hero__rule" aria-hidden="true"></span>
+        <span>{{ tx.venue_name }}</span>
+      </p>
+    {% endif %}
+  </div>
+
+  <a class="hero__down" href="#{% if w.mode == 'thanks' %}{% if gallery %}rasmlar{% else %}tilaklar{% endif %}{% else %}vaqt{% endif %}" aria-label="{{ L.scroll_hint }}">
+    <svg><use href="#i-down"/></svg>
+  </a>
+</section>
+
+<main class="flow">
+
 {% if w.mode != 'thanks' %}
 
-  {# =============================================== SANOQ — TO'Q EKRAN #}
-  <section class="sec sec--dark sec--full" x-data="countdown()">
-    {% include "site/_frame.html" %}
-    <div class="sec__inner appear">
-      <p class="sec__eyebrow">{{ L.countdown_title }}</p>
-      {% include "site/_divider.html" %}
-
+  {# ------------------------------------------------ SANOQ #}
+  <section class="sec sec--count" id="vaqt" x-data="countdown()">
+    <div class="sec__head" data-rise>
+      <h2 class="title">{{ L.countdown_title }}</h2>
+      <p class="sec__sub">{{ event_date }}, {{ event_weekday }}</p>
+    </div>
+    <div class="sec__body">
       <template x-if="!done">
-        <div>
-          <div class="bigday">
-            <span class="bigday__num" x-text="left.kun">—</span>
-            <span class="bigday__label">{{ L.days }}</span>
+        <div class="count" data-rise>
+          <div class="count__unit">
+            <span class="roll-num"><template x-for="(ch, i) in String(left.kun).split('')" :key="i + '-' + String(left.kun).length"><span class="roll"><span class="roll__col" :style="'--n:' + ch"><span>0</span><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span></span></span></template></span>
+            <span class="count__lbl">{{ L.days }}</span>
           </div>
-          <div class="smallunits">
-            <div><span class="smallunits__num" x-text="pad(left.soat)">—</span><span class="smallunits__lbl">{{ L.hours }}</span></div>
-            <div><span class="smallunits__num" x-text="pad(left.daqiqa)">—</span><span class="smallunits__lbl">{{ L.minutes }}</span></div>
-            <div><span class="smallunits__num" :class="{ 'is-tick': pulse }" x-text="pad(left.soniya)">—</span><span class="smallunits__lbl">{{ L.seconds }}</span></div>
+          <div class="count__unit">
+            <span class="roll-num"><template x-for="(ch, i) in pad(left.soat).split('')" :key="'h' + i"><span class="roll"><span class="roll__col" :style="'--n:' + ch"><span>0</span><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span></span></span></template></span>
+            <span class="count__lbl">{{ L.hours }}</span>
+          </div>
+          <div class="count__unit">
+            <span class="roll-num"><template x-for="(ch, i) in pad(left.daqiqa).split('')" :key="'m' + i"><span class="roll"><span class="roll__col" :style="'--n:' + ch"><span>0</span><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span></span></span></template></span>
+            <span class="count__lbl">{{ L.minutes }}</span>
+          </div>
+          <div class="count__unit">
+            <span class="roll-num"><template x-for="(ch, i) in pad(left.soniya).split('')" :key="'s' + i"><span class="roll"><span class="roll__col" :style="'--n:' + ch"><span>0</span><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span></span></span></template></span>
+            <span class="count__lbl">{{ L.seconds }}</span>
           </div>
         </div>
       </template>
       <template x-if="done">
-        <p class="bigday__done">{{ L.today }}</p>
+        <p class="count__done">{{ L.today }}</p>
       </template>
-
-      <p class="sec__foot">{{ event_date }} · {{ event_weekday }}</p>
     </div>
   </section>
 
-  {# =============================================== TAKLIF MATNI #}
+  {# ------------------------------------------------ TAKLIF #}
   {% if tx.invite_text %}
-  <section class="sec sec--full">
-    {% include "site/_frame.html" %}
-    <div class="sec__inner appear">
-      {% include "site/_divider.html" %}
-      <p class="lede lede--center">{{ tx.invite_text|linebreaksbr }}</p>
-      {% include "site/_divider.html" %}
+  <section class="sec sec--invite" id="taklif">
+    <div class="sec__head" data-rise><h2 class="title">{{ L.invite_title }}</h2></div>
+    <div class="sec__body">
+      <p class="invite__text" data-rise>{{ tx.invite_text|linebreaksbr }}</p>
+      <p class="invite__sign" data-rise>{{ tx.groom }} {{ L.and }} {{ tx.bride }}</p>
     </div>
   </section>
   {% endif %}
 
-  {# =============================================== ALMASHIB TURUVCHI RASMLAR #}
-  {% if gallery %}
-  <div class="slideshow" x-data="slideshow()">
-    {% for p in gallery %}
-      <img src="{{ p.image.url }}" alt="{{ p.caption }}"
-           :class="{ 'is-active': index === {{ forloop.counter0 }} }"
-           class="{% if forloop.first %}is-active{% endif %}"
-           loading="{% if forloop.first %}eager{% else %}lazy{% endif %}">
-    {% endfor %}
-    <div class="slideshow__dots">
-      {% for p in gallery %}
-        <button type="button" @click="go({{ forloop.counter0 }})"
-                :class="{ 'is-active': index === {{ forloop.counter0 }} }"
-                aria-label="{{ forloop.counter }}"></button>
-      {% endfor %}
-    </div>
-  </div>
-  {% endif %}
-
-  {# =============================================== SEVGI TARIXI #}
+  {# ------------------------------------------------ SEVGI TARIXI #}
   {% if timeline %}
-  <section class="sec">
-    <div class="sec__inner appear">
-      <h2 class="sec__title">{{ L.story_title }}</h2>
-      {% include "site/_divider.html" %}
-      <ol class="timeline">
-        {% for e in timeline %}
-          <li>
-            {% if e.date_label %}<span class="timeline__date">{{ e.date_label }}</span>{% endif %}
-            <h3 class="timeline__title">{{ e.title }}</h3>
-            {% if e.text %}<p class="timeline__text">{{ e.text }}</p>{% endif %}
-          </li>
-        {% endfor %}
-      </ol>
-    </div>
+  <section class="sec" id="tarix">
+    <div class="sec__head" data-rise><h2 class="title">{{ L.story_title }}</h2></div>
+    <ol class="sec__body story">
+      {% for e in timeline %}
+        <li class="story__item" data-rise>
+          <p class="story__date">{{ e.date_label|default:"—" }}</p>
+          <div>
+            <h3 class="story__title">{{ e.title }}</h3>
+            {% if e.text %}<p class="story__text">{{ e.text }}</p>{% endif %}
+          </div>
+        </li>
+      {% endfor %}
+    </ol>
   </section>
   {% endif %}
 {% endif %}
 
-  {# =============================================== GALEREYA #}
+  {# ------------------------------------------------ GALEREYA #}
   {% if gallery %}
-  <section class="sec sec--tinted" x-data="{ open: null }" @keydown.escape.window="open = null">
-    <div class="sec__inner appear">
-      <h2 class="sec__title">
-        {% if w.mode == 'thanks' %}{{ L.gallery_title_thanks }}{% else %}{{ L.gallery_title }}{% endif %}
-      </h2>
-      {% include "site/_divider.html" %}
-      <div class="gallery">
-        {% for p in gallery %}
-          <button class="gallery__item" @click="open = '{{ p.image.url }}'"
-                  aria-label="{{ p.caption }}">
-            <img src="{{ p.image.url }}" alt="{{ p.caption }}" loading="lazy">
-          </button>
-        {% endfor %}
-      </div>
+  <section class="sec sec--gallery" id="rasmlar" x-data="gallery()" @keydown.escape.window="close()"
+           @keydown.arrow-right.window="if (open !== null) step(1)" @keydown.arrow-left.window="if (open !== null) step(-1)">
+    <div class="sec__head" data-rise>
+      <h2 class="title">{% if w.mode == 'thanks' %}{{ L.gallery_title_thanks }}{% else %}{{ L.gallery_title }}{% endif %}</h2>
+      <p class="sec__sub gal__counter"><span x-text="String(cur + 1).padStart(2, '0')">01</span> / {{ gallery|length|stringformat:"02d" }}</p>
     </div>
-    <div class="lightbox" x-show="open" x-cloak @click="open = null"
-         role="dialog" aria-modal="true" style="display:none">
-      <button class="lightbox__close" aria-label="{{ L.close }}" @click="open = null">&times;</button>
-      <img :src="open" alt="">
+    <div class="gal" x-ref="gal" @scroll.passive="onScroll()" data-reveal-group>
+      {% for p in gallery %}
+        <figure class="gal__item" style="--g: {{ forloop.counter0 }}">
+          <button type="button" class="gal__btn" data-src="{{ p.image.url }}" @click="tap({{ forloop.counter0 }})" aria-label="{{ p.caption|default:forloop.counter }}">
+            <img src="{{ p.image.url }}" alt="{{ p.caption }}" loading="{% if forloop.counter < 3 %}eager{% else %}lazy{% endif %}" draggable="false">
+          </button>
+          {% if p.caption %}<figcaption>{{ p.caption }}</figcaption>{% endif %}
+        </figure>
+      {% endfor %}
+    </div>
+    <div class="gal__nav">
+      <button type="button" class="round-btn" @click="slide(-1)" aria-label="‹"><svg><use href="#i-left"/></svg></button>
+      <span class="gal__bar"><i :style="'transform: scaleX(' + progress + ')'"></i></span>
+      <button type="button" class="round-btn" @click="slide(1)" aria-label="›"><svg><use href="#i-right"/></svg></button>
+    </div>
+
+    <div class="lightbox" x-show="open !== null" x-cloak x-transition.opacity.duration.300ms @click.self="close()" role="dialog" aria-modal="true">
+      <button class="round-btn round-btn--light lightbox__close" type="button" @click="close()" aria-label="{{ L.close }}"><svg><use href="#i-x"/></svg></button>
+      <button class="round-btn round-btn--light lightbox__prev" type="button" @click="step(-1)" aria-label="‹"><svg><use href="#i-left"/></svg></button>
+      <img :src="src" alt="" class="lightbox__img">
+      <button class="round-btn round-btn--light lightbox__next" type="button" @click="step(1)" aria-label="›"><svg><use href="#i-right"/></svg></button>
+      <p class="lightbox__count" x-text="(open + 1) + ' / ' + count"></p>
     </div>
   </section>
   {% endif %}
 
 {% if w.mode != 'thanks' %}
-  {# =============================================== MAROSIM VA XARITA #}
-  <section class="sec">
-    <div class="sec__inner appear">
-      <h2 class="sec__title">{{ L.event_title }}</h2>
-      {% include "site/_divider.html" %}
-      <dl class="facts">
-        <div>
-          <dt>{{ L.fact_date }}</dt>
-          <dd><strong>{{ event_date }}</strong>, {{ event_weekday }}</dd>
-        </div>
+  {# ------------------------------------------------ MAROSIM #}
+  <section class="sec sec--event" id="manzil" x-data="eventCard()">
+    <div class="sec__head" data-rise><h2 class="title">{{ L.event_title }}</h2></div>
+    <div class="sec__body">
+      <div class="when" data-rise>
+        <span class="when__day">{{ event_day }}</span>
+        <span class="when__rest">
+          <span>{{ event_month }} {{ event_year }}</span>
+          <span class="when__wd">{{ event_weekday }}</span>
+        </span>
+      </div>
+      <dl class="facts" data-rise>
         <div>
           <dt>{{ L.fact_time }}</dt>
-          <dd>
-            {% if w.welcome_time %}{{ L.welcome_at }} {{ w.welcome_time }} · {% endif %}
-            {{ L.starts_at }} {{ event_time }}
-          </dd>
+          <dd>{% if w.welcome_time %}{{ L.welcome_at }} — {{ w.welcome_time }}<br>{% endif %}{{ L.starts_at }} — {{ event_time }}</dd>
         </div>
         <div>
           <dt>{{ L.fact_place }}</dt>
-          <dd>
-            <strong>{{ tx.venue_name }}</strong>
-            {% if tx.venue_address %}<br>{{ tx.venue_address }}{% endif %}
-          </dd>
+          <dd><strong>{{ tx.venue_name }}</strong>{% if tx.venue_address %}<br><span class="facts__addr">{{ tx.venue_address }}</span>{% endif %}</dd>
         </div>
         {% if tx.dress_code %}
         <div>
@@ -242,105 +263,86 @@
         </div>
         {% endif %}
       </dl>
-
       {% if map_embed %}
-        <div class="map">
-          <iframe src="{{ map_embed }}" loading="lazy"
-                  title="{{ tx.venue_name }}"
-                  referrerpolicy="no-referrer-when-downgrade"></iframe>
-          <div class="map__foot">
-            <p class="map__addr">{{ tx.venue_address|default:tx.venue_name }}</p>
-            {% if map_href %}
-              <a class="btn btn--ghost" href="{{ map_href }}" target="_blank" rel="noopener noreferrer">
-                {{ L.open_maps }}
-              </a>
-            {% endif %}
-          </div>
+        <div class="map" data-rise>
+          <iframe src="{{ map_embed }}" loading="lazy" title="{{ tx.venue_name }}" referrerpolicy="no-referrer-when-downgrade"></iframe>
         </div>
       {% endif %}
+      <div class="actions" data-rise>
+        {% if map_href %}
+          <a class="btn btn--dark" href="{{ map_href }}" target="_blank" rel="noopener noreferrer"><svg><use href="#i-route"/></svg>{{ L.directions }}</a>
+        {% endif %}
+        <button type="button" class="btn btn--line" @click="calendar()"><svg><use href="#i-cal"/></svg>{{ L.add_calendar }}</button>
+      </div>
     </div>
   </section>
 
-  {# =============================================== JAVOB #}
+  {# ------------------------------------------------ JAVOB #}
   {% if w.rsvp_open %}
-  <section class="sec sec--tinted" x-data="rsvpForm()">
-    <div class="sec__inner appear">
-      <template x-if="!sent">
-        <div>
-          <h2 class="sec__title">
-            {% if guest %}{{ guest.name }}{% if lang == 'en' %}, will you join us?{% else %}, kelasizmi?{% endif %}
-            {% else %}{{ L.rsvp_title }}{% endif %}
-          </h2>
-          {% include "site/_divider.html" %}
-          <p class="lede lede--center" style="margin-bottom:2.25rem">{{ L.rsvp_lead }}</p>
+  <section class="sec sec--rsvp" id="javob" x-data="rsvpForm()">
+    <div class="sec__head" data-rise>
+      <h2 class="title">{{ rsvp_heading }}</h2>
+      <p class="sec__sub">{{ L.rsvp_lead }}</p>
+    </div>
+    <div class="sec__body">
+      <div class="rsvp" data-rise>
+        <form x-show="!sent" @submit.prevent="submit" novalidate>
+          {% if not guest %}
+            <label class="field"><span>{{ L.your_name }}</span><input x-model="name" autocomplete="name"></label>
+          {% endif %}
 
-          <form @submit.prevent="submit">
-            {% if not guest %}
-            <div class="field">
-              <label for="rsvp-name">{{ L.your_name }}</label>
-              <input id="rsvp-name" x-model="name" autocomplete="name">
+          <div class="choice" role="group" aria-label="{{ L.your_answer }}">
+            <button type="button" class="choice__btn" :aria-pressed="(attending === true).toString()" @click="attending = true">
+              <span class="choice__mark"><svg><use href="#i-check"/></svg></span>{{ L.coming }}
+            </button>
+            <button type="button" class="choice__btn" :aria-pressed="(attending === false).toString()" @click="attending = false">
+              <span class="choice__mark"><svg><use href="#i-x"/></svg></span>{{ L.not_coming }}
+            </button>
+          </div>
+
+          <div class="seats" x-show="attending === true" x-transition.opacity.duration.300ms x-cloak>
+            <span>{{ L.how_many }}</span>
+            <div class="stepper">
+              <button type="button" @click="seats = Math.max(1, seats - 1)" :disabled="seats <= 1" aria-label="−"><svg><use href="#i-minus"/></svg></button>
+              <output x-text="seats"></output>
+              <button type="button" @click="seats = Math.min(10, seats + 1)" :disabled="seats >= 10" aria-label="+"><svg><use href="#i-plus"/></svg></button>
             </div>
-            {% endif %}
+          </div>
 
-            <div class="field">
-              <label>{{ L.your_answer }}</label>
-              <div class="choice">
-                <button type="button" :aria-pressed="attending === true"
-                        @click="attending = true">{{ L.coming }}</button>
-                <button type="button" :aria-pressed="attending === false"
-                        @click="attending = false">{{ L.not_coming }}</button>
-              </div>
-            </div>
+          {% if not guest %}
+            <label class="field"><span>{{ L.your_phone }}</span><input type="tel" x-model="phone" placeholder="+998" autocomplete="tel" inputmode="tel"></label>
+          {% endif %}
 
-            <div class="field" x-show="attending === true" x-cloak>
-              <label for="rsvp-seats">{{ L.how_many }}</label>
-              <select id="rsvp-seats" x-model="seats">
-                <option value="1">1</option><option value="2">2</option>
-                <option value="3">3</option><option value="4">4</option>
-                <option value="5">5</option><option value="6">6</option>
-                <option value="7">7</option><option value="8">8</option>
-                <option value="9">9</option><option value="10">10</option>
-              </select>
-            </div>
+          <button class="btn btn--dark btn--wide" type="submit" :disabled="sending">
+            <span x-text="sending ? T.sending + '…' : T.send_answer">{{ L.send_answer }}</span><svg><use href="#i-arrow"/></svg>
+          </button>
+          <p class="msg msg--err" x-show="error" x-text="error" x-cloak role="alert"></p>
+        </form>
 
-            {% if not guest %}
-            <div class="field">
-              <label for="rsvp-phone">{{ L.your_phone }}</label>
-              <input id="rsvp-phone" type="tel" x-model="phone" placeholder="+998" autocomplete="tel">
-            </div>
-            {% endif %}
-
-            <button class="btn btn--wide" type="submit" :disabled="sending"
-                    x-text="sending ? '{{ L.sending }}' : '{{ L.send_answer }}'">{{ L.send_answer }}</button>
-            <p class="form-error" x-show="error" x-text="error" x-cloak></p>
-          </form>
+        <div class="rsvp__done" x-show="sent" x-cloak>
+          <svg class="rsvp__tick" viewBox="0 0 52 52" aria-hidden="true"><circle cx="26" cy="26" r="24"/><path d="M15 27l7 7 15-15"/></svg>
+          <h3 x-text="attending ? T.rsvp_done_yes : T.rsvp_done_no"></h3>
+          <p x-show="attending" class="rsvp__seats"><b x-text="seats"></b> {{ L.people }}</p>
+          <p x-text="attending ? T.rsvp_done_yes_text : T.rsvp_done_no_text"></p>
+          <button type="button" class="link-btn" @click="sent = false">{{ L.change_answer }}</button>
         </div>
-      </template>
-
-      <template x-if="sent">
-        <div class="done">
-          <h3 x-text="attending ? '{{ L.rsvp_done_yes }}' : '{{ L.rsvp_done_no }}'"></h3>
-          <p x-text="attending ? '{{ L.rsvp_done_yes_text }}' : '{{ L.rsvp_done_no_text }}'"></p>
-        </div>
-      </template>
+      </div>
     </div>
   </section>
   {% endif %}
 {% endif %}
 
-  {# =============================================== DUOLAR #}
+  {# ------------------------------------------------ DUOLAR #}
   {% if duas %}
-  <section class="sec sec--dark" x-data="{ i: 0, n: {{ duas|length }} }">
-    {% include "site/_frame.html" %}
-    <div class="sec__inner appear">
-      <h2 class="sec__title">{{ L.duas_title }}</h2>
-      {% include "site/_divider.html" %}
-      <p class="lede lede--center" style="margin-bottom:2.5rem">{{ L.duas_lead }}</p>
-
-      <div class="duas">
+  <section class="sec sec--duas" id="duolar" x-data="duas({{ duas|length }})">
+    <div class="sec__head" data-rise>
+      <h2 class="title">{{ L.duas_title }}</h2>
+      <p class="sec__sub">{{ L.duas_lead }}</p>
+    </div>
+    <div class="sec__body" @touchstart.passive="touchStart($event)" @touchend.passive="touchEnd($event)">
+      <div class="duas__stack" data-rise>
         {% for d in duas %}
-          <article class="dua" :class="{ 'is-active': i === {{ forloop.counter0 }} }"
-                   {% if forloop.first %}class="dua is-active"{% endif %}>
+          <article class="dua {% if forloop.first %}is-on{% endif %}" :class="{ 'is-on': i === {{ forloop.counter0 }} }">
             <h3 class="dua__title">{{ d.title }}</h3>
             {% if d.arabic %}<p class="dua__ar" dir="rtl" lang="ar">{{ d.arabic }}</p>{% endif %}
             {% if d.transliteration %}<p class="dua__tr">{{ d.transliteration }}</p>{% endif %}
@@ -349,173 +351,132 @@
           </article>
         {% endfor %}
       </div>
-
-      <div class="rotator__nav" x-show="n > 1">
-        <button type="button" class="navbtn" @click="i = (i - 1 + n) % n" aria-label="{{ L.dua_prev }}">
-          <svg viewBox="0 0 20 20" fill="none"><path d="M12 4 L6 10 L12 16" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        </button>
-        <span class="rotator__count" x-text="(i + 1) + ' / ' + n"></span>
-        <button type="button" class="navbtn" @click="i = (i + 1) % n" aria-label="{{ L.dua_next }}">
-          <svg viewBox="0 0 20 20" fill="none"><path d="M8 4 L14 10 L8 16" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        </button>
+      <div class="pager" x-show="n > 1">
+        <button type="button" class="round-btn" @click="go(-1)" aria-label="{{ L.dua_prev }}"><svg><use href="#i-left"/></svg></button>
+        <span class="pager__num"><b x-text="i + 1"></b> / <span x-text="n"></span></span>
+        <button type="button" class="round-btn" @click="go(1)" aria-label="{{ L.dua_next }}"><svg><use href="#i-right"/></svg></button>
       </div>
     </div>
   </section>
   {% endif %}
 
-  {# =============================================== TILAKLAR #}
-  <section class="sec" x-data="wishWall()">
-    <div class="sec__inner appear">
-      <h2 class="sec__title">{{ L.wishes_title }}</h2>
-      {% include "site/_divider.html" %}
-      <p class="lede lede--center" style="margin-bottom:2.25rem">{{ L.wishes_lead }}</p>
-
-      <form @submit.prevent="submit">
-        {% if not guest %}
-        <div class="field">
-          <label for="wish-name">{{ L.your_name }}</label>
-          <input id="wish-name" x-model="name" autocomplete="name">
-        </div>
-        {% endif %}
-        <div class="field">
-          <label for="wish-text">{{ L.your_wish }}</label>
-          <textarea id="wish-text" x-model="text" maxlength="600"
-                    placeholder="{{ L.wish_placeholder }}"></textarea>
-        </div>
-        <button class="btn" type="submit" :disabled="sending"
-                x-text="sending ? '{{ L.sending }}' : '{{ L.send_wish }}'">{{ L.send_wish }}</button>
-        <p class="form-error" x-show="error" x-text="error" x-cloak></p>
-        <p class="form-ok" x-show="notice" x-text="notice" x-cloak></p>
-      </form>
-
-      <div class="rotator" x-show="all.length" x-cloak
-           @mouseenter="pause()" @mouseleave="resume()">
-        <template x-for="(wish, i) in all" :key="wish.id">
-          <blockquote class="rotator__card" :class="{ 'is-active': i === index }">
-            <p class="rotator__text" x-text="wish.text"></p>
-            <footer class="rotator__from" x-text="wish.name"></footer>
+  {# ------------------------------------------------ TILAKLAR #}
+  <section class="sec sec--wishes" id="tilaklar" x-data="wishWall()">
+    <div class="sec__head" data-rise>
+      <h2 class="title">{{ L.wishes_title }}</h2>
+      <p class="sec__sub">{{ L.wishes_lead }}</p>
+    </div>
+    <div class="sec__body">
+      <div class="quotes" x-show="all.length" x-cloak>
+        <template x-for="wish in all" :key="wish.id">
+          <blockquote class="quote" :class="{ 'is-new': wish.fresh }">
+            <p class="quote__text" x-text="wish.text"></p>
+            <footer class="quote__from" x-text="wish.name"></footer>
           </blockquote>
         </template>
-        <div class="rotator__nav" x-show="all.length > 1">
-          <button type="button" class="navbtn" @click="prev()" aria-label="{{ L.prev_wish }}">
-            <svg viewBox="0 0 20 20" fill="none"><path d="M12 4 L6 10 L12 16" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          </button>
-          <span class="rotator__count" x-text="(index + 1) + ' / ' + all.length"></span>
-          <button type="button" class="navbtn" @click="next()" aria-label="{{ L.next_wish }}">
-            <svg viewBox="0 0 20 20" fill="none"><path d="M8 4 L14 10 L8 16" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          </button>
-        </div>
       </div>
+      <p class="quotes-empty" x-show="!all.length" x-cloak>{{ L.no_wishes }}</p>
 
-      <p class="wishes-empty" x-show="!all.length" x-cloak>{{ L.no_wishes }}</p>
+      <form class="wish-form" @submit.prevent="submit" novalidate data-rise>
+        {% if not guest %}
+          <label class="field"><span>{{ L.your_name }}</span><input x-model="name" autocomplete="name"></label>
+        {% endif %}
+        <label class="field">
+          <span>{{ L.your_wish }}</span>
+          <textarea x-model="text" maxlength="600" rows="3" placeholder="{{ L.wish_placeholder }}"></textarea>
+          <em class="field__count" x-text="text.length + ' / 600'"></em>
+        </label>
+        <button class="btn btn--dark" type="submit" :disabled="sending">
+          <span x-text="sending ? T.sending + '…' : T.send_wish">{{ L.send_wish }}</span><svg><use href="#i-arrow"/></svg>
+        </button>
+        <p class="msg msg--err" x-show="error" x-text="error" x-cloak role="alert"></p>
+        <p class="msg msg--ok" x-show="notice" x-text="notice" x-cloak role="status"></p>
+      </form>
     </div>
   </section>
 
-  {# =============================================== ESDALIK RASMLARI #}
+  {# ------------------------------------------------ ESDALIK YUKLASH #}
   {% if w.uploads_open %}
-  <section class="sec sec--tinted" x-data="uploader()">
-    <div class="sec__inner appear">
-      <h2 class="sec__title">{{ L.upload_title }}</h2>
-      {% include "site/_divider.html" %}
-      {% if tx.upload_hint %}
-        <p class="lede lede--center" style="margin-bottom:2.25rem">{{ tx.upload_hint|linebreaksbr }}</p>
-      {% endif %}
-
-      <div class="field">
-        <label for="up-name">{{ L.your_name }}</label>
-        <input id="up-name" x-model="name" autocomplete="name">
-      </div>
-
-      <div class="drop" :class="{ 'drop--over': dragging }"
-           @dragover.prevent="dragging = true"
-           @dragleave="dragging = false"
+  <section class="sec" id="yuklash" x-data="uploader()">
+    <div class="sec__head" data-rise>
+      <h2 class="title">{{ L.upload_title }}</h2>
+      {% if tx.upload_hint %}<p class="sec__sub">{{ tx.upload_hint|linebreaksbr }}</p>{% endif %}
+    </div>
+    <div class="sec__body upload" data-rise>
+      <label class="field"><span>{{ L.your_name }}</span><input x-model="name" autocomplete="name"></label>
+      <div class="drop" :class="{ 'is-over': dragging }"
+           @dragover.prevent="dragging = true" @dragleave="dragging = false"
            @drop.prevent="dragging = false; addFiles($event.dataTransfer.files)">
-        {% if L.upload_note %}<p>{{ L.upload_note }}</p>{% endif %}
-        <div class="btn-row">
-          <label class="btn" style="cursor:pointer">
-            {{ L.pick_gallery }}
-            <input type="file" multiple style="display:none"
-                   accept="image/*,video/*,image/heic,image/heif,.heic,.heif,.mov,.mp4,.m4v,.dng"
+        <svg class="drop__ic"><use href="#i-upload"/></svg>
+        <p>{{ L.drop_here }}</p>
+        <div class="actions actions--center">
+          <label class="btn btn--dark">
+            <svg><use href="#i-photo"/></svg>{{ L.pick_gallery }}
+            <input type="file" multiple hidden accept="image/*,video/*,image/heic,image/heif,.heic,.heif,.mov,.mp4,.m4v,.dng"
                    @change="addFiles($event.target.files); $event.target.value = ''">
           </label>
-          <button type="button" class="btn btn--ghost" @click="openCamera()">
-            {{ L.take_photo }}
-          </button>
+          <button type="button" class="btn btn--line" @click="openCamera()"><svg><use href="#i-camera"/></svg>{{ L.take_photo }}</button>
         </div>
       </div>
-
-      <p class="form-error" x-show="error" x-text="error" x-cloak></p>
-
-      <template x-if="items.length">
-        <div>
-          <ul class="queue">
-            <template x-for="it in items" :key="it.id">
-              <li>
-                <div class="queue__row">
-                  <span class="queue__name" x-text="it.name"></span>
-                  <span class="queue__state"
-                        :class="{ 'queue__state--ok': it.state === 'done',
-                                  'queue__state--err': it.state === 'error' }"
-                        x-text="stateText(it)"></span>
-                </div>
-                <div class="bar" x-show="it.state === 'uploading'" x-cloak>
-                  <span :style="`width:${it.progress}%`"></span>
-                </div>
-              </li>
-            </template>
-          </ul>
-          <p class="form-note" x-text="busy
-            ? '{{ L.uploading }}'
-            : doneCount + ' {{ L.uploaded_count }}'"></p>
-        </div>
-      </template>
-
-      {% if L.upload_privacy %}<p class="form-note">{{ L.upload_privacy }}</p>{% endif %}
+      <p class="msg msg--err" x-show="error" x-text="error" x-cloak role="alert"></p>
+      <ul class="queue" x-show="items.length" x-cloak>
+        <template x-for="it in items" :key="it.id">
+          <li class="queue__item" :class="'is-' + it.state">
+            <span class="queue__thumb"><img x-show="it.preview" :src="it.preview" alt=""><svg x-show="!it.preview"><use href="#i-photo"/></svg></span>
+            <span class="queue__body"><span class="queue__name" x-text="it.name"></span><span class="queue__bar"><i :style="'width:' + it.progress + '%'"></i></span></span>
+            <span class="queue__state" x-text="stateText(it)"></span>
+          </li>
+        </template>
+      </ul>
+      <p class="msg" x-show="items.length" x-cloak x-text="busy ? T.uploading : doneCount + ' ' + T.uploaded_count"></p>
     </div>
 
-    <div class="cam" x-show="camOpen" x-cloak role="dialog" aria-modal="true">
-      <div class="cam__inner">
-        <video x-ref="cam" playsinline muted x-show="!camError"></video>
-        <p class="cam__error" x-show="camError" x-text="camError"></p>
-        <div class="cam__bar">
-          <button type="button" class="btn btn--ghost" @click="closeCamera()">{{ L.close }}</button>
-          <button type="button" class="btn" @click="shoot()" x-show="!camError">{{ L.shoot }}</button>
-        </div>
+    <div class="cam" x-show="camOpen" x-cloak x-transition.opacity role="dialog" aria-modal="true">
+      <video x-ref="cam" playsinline muted x-show="!camError"></video>
+      <p class="cam__error" x-show="camError" x-text="camError"></p>
+      <div class="cam__bar">
+        <button type="button" class="btn btn--line btn--light" @click="closeCamera()">{{ L.close }}</button>
+        <button type="button" class="cam__shoot" @click="shoot()" x-show="!camError" aria-label="{{ L.shoot }}"></button>
       </div>
     </div>
   </section>
   {% endif %}
 </main>
 
-{# =============================================== FOOTER #}
-<footer class="footer">
-  {% include "site/_frame.html" %}
-  <div class="footer__inner">
-    {% include "site/_divider.html" %}
-    <p class="footer__names">{{ tx.groom }} &amp; {{ tx.bride }}</p>
-    <p>{{ L.footer_note }}</p>
-    {% if w.contact_one_phone or w.contact_two_phone %}
-      <p style="margin-top:1.25rem">
-        {% if w.contact_one_phone %}
-          {{ w.contact_one_name }}: <a href="tel:{{ w.contact_one_phone|cut:' ' }}">{{ w.contact_one_phone }}</a>
-        {% endif %}
-        {% if w.contact_two_phone %}
-          <br>{{ w.contact_two_name }}: <a href="tel:{{ w.contact_two_phone|cut:' ' }}">{{ w.contact_two_phone }}</a>
-        {% endif %}
-      </p>
-    {% endif %}
-  </div>
+{# ================================================================ OXIRI #}
+<footer class="foot">
+  <p class="foot__names" data-rise>{{ tx.groom }} <span>&amp;</span> {{ tx.bride }}</p>
+  <p class="foot__note">{{ L.footer_note }}</p>
+  {% if contacts %}
+    <div class="foot__contacts">
+      <p class="foot__q">{{ L.questions }}</p>
+      {% for c in contacts %}
+        <a class="contact" href="tel:{{ c.tel }}">
+          <span><b>{{ c.name|default:L.call }}</b><small>{{ c.phone }}</small></span>
+          <svg><use href="#i-phone"/></svg>
+        </a>
+      {% endfor %}
+    </div>
+  {% endif %}
+  <p class="foot__date">{{ event_date }}</p>
 </footer>
 
-{% if music_url %}
-<div x-data="musicPlayer()">
-  <audio x-ref="audio" src="{{ music_url }}" loop preload="auto"></audio>
-  <button class="music" @click="toggle" :aria-pressed="playing"
-          x-text="playing ? '❚❚' : '♪'">♪</button>
-</div>
-{% endif %}
+{# ================================================================ PASTKI MENYU (telefon) #}
+<nav class="dock" aria-label="Bo'limlar" data-dock>
+  <a href="#bosh" data-nav="bosh"><svg><use href="#i-home"/></svg><span>{{ L.nav_home }}</span></a>
+  {% if w.mode == 'thanks' %}
+    {% if gallery %}<a href="#rasmlar" data-nav="rasmlar"><svg><use href="#i-photo"/></svg><span>{{ L.nav_photos }}</span></a>{% endif %}
+    <a href="#tilaklar" data-nav="tilaklar"><svg><use href="#i-heart"/></svg><span>{{ L.nav_wishes }}</span></a>
+    {% if w.uploads_open %}<a href="#yuklash" data-nav="yuklash"><svg><use href="#i-upload"/></svg><span>{{ L.nav_upload }}</span></a>{% endif %}
+  {% else %}
+    <a href="#vaqt" data-nav="vaqt"><svg><use href="#i-clock"/></svg><span>{{ L.nav_time }}</span></a>
+    <a href="#manzil" data-nav="manzil"><svg><use href="#i-pin"/></svg><span>{{ L.nav_place }}</span></a>
+    {% if w.rsvp_open %}<a href="#javob" data-nav="javob"><svg><use href="#i-reply"/></svg><span>{{ L.nav_rsvp }}</span></a>{% endif %}
+    <a href="#tilaklar" data-nav="tilaklar"><svg><use href="#i-heart"/></svg><span>{{ L.nav_wishes }}</span></a>
+  {% endif %}
+</nav>
 
-<script defer src="{% static 'js/app.js' %}"></script>
+<script defer src="{% static 'js/site.js' %}"></script>
 <script defer src="{% static 'js/alpine.min.js' %}"></script>
 </body>
 </html>

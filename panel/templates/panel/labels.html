@@ -1,0 +1,52 @@
+{% extends "panel/base.html" %}
+{% load panel_tags %}
+{% block title %}Sahifa yozuvlari{% endblock %}
+{% block heading %}Sahifa yozuvlari{% endblock %}
+{% block content %}
+<form method="post" x-data="{ lang: 'uz', dirty: false, q: '' }" @input="dirty = true">
+  {% csrf_token %}
+  <header class="page-head rise">
+    <div>
+      <h2 class="page-title">Sahifa yozuvlari</h2>
+      <p class="page-sub">Saytdagi har bir sarlavha va tugma yozuvini o'zingiz yozasiz. Bo'sh qoldirsangiz — kulrang standart matn chiqadi.{% if changed %} Hozir {{ changed }} ta yozuv o'zgartirilgan.{% endif %}</p>
+    </div>
+    <div class="page-actions">
+      <a class="btn btn--ghost" href="/" target="_blank">{% icon "external" %} Saytda ko'rish</a>
+    </div>
+  </header>
+
+  <div class="toolbar rise" style="--d:1">
+    <div class="seg seg--sm" style="margin:0">
+      <button type="button" :class="{ 'is-on': lang === 'uz' }" @click="lang = 'uz'">O'zbekcha</button>
+      <button type="button" :class="{ 'is-on': lang === 'en' }" @click="lang = 'en'">Inglizcha</button>
+      <span class="seg__pill" :style="lang === 'en' ? 'transform: translateX(100%)' : ''"></span>
+    </div>
+    <label class="search">{% icon "search" 18 %}<input type="search" x-model="q" placeholder="Yozuvni qidirish" aria-label="Qidirish"></label>
+  </div>
+
+  <fieldset class="plain" {% if not can_edit %}disabled{% endif %}>
+  {% for g in groups %}
+    <section class="card lbl-group rise" style="--d: {{ forloop.counter|add:1 }}">
+      <header class="card__head"><h3>{{ g.title }}</h3></header>
+      {% for r in g.rows %}
+        <div class="lbl" x-show="!q || '{{ r.hint|escapejs|lower }} {{ r.uz_default|escapejs|lower }} {{ r.en_default|escapejs|lower }}'.includes(q.toLowerCase())">
+          <span class="lbl__hint">{{ r.hint }}</span>
+          <input name="uz__{{ r.key }}" value="{{ r.uz }}" placeholder="{{ r.uz_default }}" x-show="lang === 'uz'" maxlength="300" class="{% if r.uz %}is-set{% endif %}">
+          <input name="en__{{ r.key }}" value="{{ r.en }}" placeholder="{{ r.en_default }}" x-show="lang === 'en'" x-cloak maxlength="300" class="{% if r.en %}is-set{% endif %}">
+        </div>
+      {% endfor %}
+    </section>
+  {% endfor %}
+  </fieldset>
+
+  {% if can_edit %}
+  <div class="savebar" :class="{ 'is-dirty': dirty }">
+    <span class="savebar__note" x-text="dirty ? 'O\'zgarishlar saqlanmagan' : 'Hammasi saqlangan'">Hammasi saqlangan</span>
+    <span style="display:flex;gap:.5rem">
+      {% if changed %}<button class="btn btn--ghost" type="submit" name="reset" value="1" formnovalidate>Standartga qaytarish</button>{% endif %}
+      <button class="btn btn--primary" type="submit">{% icon "check" %} Saqlash</button>
+    </span>
+  </div>
+  {% endif %}
+</form>
+{% endblock %}

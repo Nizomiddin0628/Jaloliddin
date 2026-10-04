@@ -1,0 +1,37 @@
+{% extends "panel/base.html" %}
+{% load panel_tags %}
+{% block title %}Kirish{% endblock %}
+{% block body_class %}is-login{% endblock %}
+{% block shell %}
+<main class="login">
+  <div class="login__art" aria-hidden="true">
+    <svg width="100%" height="100%"><rect width="100%" height="100%" fill="url(#p-girih)"/></svg>
+  </div>
+  <form class="login__card" method="post" x-data="{ show: false, busy: false }" @submit="busy = true">
+    {% csrf_token %}
+    <span class="brand__mark brand__mark--lg">{% if w %}{{ w.groom_name|slice:":1" }}<i>&amp;</i>{{ w.bride_name|slice:":1" }}{% else %}T{% endif %}</span>
+    <h1 class="login__title">{% if w %}{{ w.groom_name }} &amp; {{ w.bride_name }}{% else %}Taklifnoma{% endif %}</h1>
+    <p class="login__sub">Boshqaruv paneliga kirish</p>
+
+    {% if error %}<p class="login__err">{% icon "x" 18 %}{{ error }}</p>{% endif %}
+
+    <label class="fld">
+      <span class="fld__label">Login</span>
+      <input name="username" value="{{ username }}" autocomplete="username" autocapitalize="off" required autofocus>
+    </label>
+    <label class="fld">
+      <span class="fld__label">Parol</span>
+      <span class="pw">
+        <input name="password" :type="show ? 'text' : 'password'" type="password" autocomplete="current-password" required>
+        <button type="button" class="pw__eye" @click="show = !show" :aria-label="show ? 'Yashirish' : 'Ko\'rsatish'">
+          <svg class="ic" width="20" height="20"><use :href="show ? '#p-eyeoff' : '#p-eye'" href="#p-eye"/></svg>
+        </button>
+      </span>
+    </label>
+    <button class="btn btn--primary btn--wide btn--lg" type="submit" :disabled="busy">
+      <span x-text="busy ? 'Kirilmoqda…' : 'Kirish'">Kirish</span>
+    </button>
+    <a class="login__back" href="/">← Taklifnomaga qaytish</a>
+  </form>
+</main>
+{% endblock %}

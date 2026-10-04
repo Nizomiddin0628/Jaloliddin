@@ -54,6 +54,7 @@ INSTALLED_APPS = [
     "rest_framework",
     "corsheaders",
     "invitation",
+    "panel",
 ]
 
 MIDDLEWARE = [
@@ -80,10 +81,14 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                "panel.context.panel",
             ],
         },
     },
 ]
+
+# Boshqaruv paneliga kirish sahifasi
+LOGIN_URL = "/panel/kirish/"
 
 WSGI_APPLICATION = "config.wsgi.application"
 ASGI_APPLICATION = "config.asgi.application"

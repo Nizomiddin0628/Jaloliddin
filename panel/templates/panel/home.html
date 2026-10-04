@@ -1,0 +1,134 @@
+{% extends "panel/base.html" %}
+{% load panel_tags %}
+{% block title %}Bosh sahifa{% endblock %}
+{% block heading %}Bosh sahifa{% endblock %}
+{% block content %}
+
+{% if not w %}
+  <section class="empty-hero">
+    <h2>Xush kelibsiz!</h2>
+    <p>Taklifnoma ishlashi uchun avval to'y ma'lumotlarini kiriting: ismlar, sana va to'yxona.</p>
+    <a class="btn btn--primary btn--lg" href="{% url 'panel:wedding' %}">{% icon "ring" %} To'y ma'lumotlarini kiritish</a>
+  </section>
+{% else %}
+
+<section class="hello rise">
+  <div class="hello__pattern" aria-hidden="true"><svg width="100%" height="100%"><rect width="100%" height="100%" fill="url(#p-girih)"/></svg></div>
+  <div class="hello__text">
+    <p class="hello__hi">Assalomu alaykum, {{ user.first_name|default:user.get_username }}</p>
+    <h2 class="hello__names">{{ w.groom_name }} <i>&amp;</i> {{ w.bride_name }}</h2>
+    <p class="hello__when">{{ w.event_at|date:"j F Y, H:i" }} · {{ w.venue_name }}</p>
+  </div>
+  <div class="hello__days">
+    {% if days_left > 0 %}
+      <b data-count="{{ days_left }}">{{ days_left }}</b><span>kun qoldi</span>
+    {% elif days_left == 0 %}
+      <b>Bugun</b><span>to'y kuni!</span>
+    {% else %}
+      <b data-count="{{ days_left|stringformat:'d'|slice:'1:' }}">{{ days_left|stringformat:'d'|slice:'1:' }}</b><span>kun oldin o'tdi</span>
+    {% endif %}
+  </div>
+  <div class="hello__actions">
+    <a class="btn btn--gold" href="{% url 'panel:guests' %}#qoshish">{% icon "plus" %} Mehmon qo'shish</a>
+    <a class="btn btn--glass" href="/" target="_blank">{% icon "external" %} Saytni ko'rish</a>
+  </div>
+</section>
+
+{% if st.wishes_pending %}
+  <a class="alert rise" style="--d:1" href="{% url 'panel:wishes' %}">
+    <span class="alert__ic">{% icon "heart" %}</span>
+    <span><b>{{ st.wishes_pending }} ta yangi tilak</b> tasdiqingizni kutmoqda. Ko'rib chiqing →</span>
+  </a>
+{% endif %}
+
+<section class="kpis rise" style="--d:2">
+  <a class="kpi" href="{% url 'panel:guests' %}">
+    <span class="kpi__ring" style="--p: {{ st.opened_pct }}"><svg viewBox="0 0 36 36"><circle cx="18" cy="18" r="15.9"/><circle cx="18" cy="18" r="15.9" class="kpi__arc"/></svg><em>{{ st.opened_pct }}%</em></span>
+    <span class="kpi__body"><b data-count="{{ st.guests }}">{{ st.guests }}</b><small>mehmon taklif qilingan · {{ st.opened }} tasi ochgan</small></span>
+  </a>
+  <a class="kpi kpi--yes" href="{% url 'panel:rsvps' %}?f=yes">
+    <span class="kpi__body"><b data-count="{{ st.people }}">{{ st.people }}</b><small>kishi keladi · {{ st.yes }} ta javob</small></span>
+  </a>
+  <a class="kpi kpi--no" href="{% url 'panel:rsvps' %}?f=no">
+    <span class="kpi__body"><b data-count="{{ st.no }}">{{ st.no }}</b><small>kelolmaydi</small></span>
+  </a>
+  <a class="kpi kpi--wait" href="{% url 'panel:guests' %}?f=wait">
+    <span class="kpi__body"><b data-count="{{ st.waiting }}">{{ st.waiting }}</b><small>mehmondan javob kutilmoqda</small></span>
+  </a>
+</section>
+
+<div class="cols">
+  <div class="cols__a">
+    <section class="card rise" style="--d:3">
+      <header class="card__head"><h3>Javoblar</h3><a class="link" href="{% url 'panel:rsvps' %}">Hammasi</a></header>
+      <div class="donut">
+        <svg viewBox="0 0 42 42" class="donut__svg">
+          <circle cx="21" cy="21" r="15.915" class="donut__track"/>
+          {% for d in donut %}
+            {% if d.share %}<circle cx="21" cy="21" r="15.915" class="donut__seg donut__seg--{{ d.key }}" stroke-dasharray="{{ d.share }} {{ d.gap }}" stroke-dashoffset="{{ d.offset }}" style="--i: {{ forloop.counter0 }}"/>{% endif %}
+          {% endfor %}
+          <text x="21" y="20.5" class="donut__num">{{ st.people }}</text>
+          <text x="21" y="26" class="donut__lbl">kishi</text>
+        </svg>
+        <ul class="legend">
+          <li><i class="legend__dot legend__dot--yes"></i>Keladi <b>{{ st.yes }}</b></li>
+          <li><i class="legend__dot legend__dot--no"></i>Kelmaydi <b>{{ st.no }}</b></li>
+          <li><i class="legend__dot legend__dot--wait"></i>Kutilmoqda <b>{{ st.waiting }}</b></li>
+        </ul>
+      </div>
+    </section>
+
+    {% if perms.invitation.change_wedding %}
+    <section class="card rise" style="--d:4" x-data="toggles({ mode: '{{ w.mode }}', rsvp_open: {{ w.rsvp_open|yesno:'true,false' }}, uploads_open: {{ w.uploads_open|yesno:'true,false' }}, wishes_need_approval: {{ w.wishes_need_approval|yesno:'true,false' }}, show_english: {{ w.show_english|yesno:'true,false' }} })">
+      <header class="card__head"><h3>Sayt holati</h3></header>
+
+      <div class="seg" role="group" aria-label="Sahifa rejimi">
+        <button type="button" :class="{ 'is-on': s.mode === 'invitation' }" @click="set('mode', 'invitation')">{% icon "ring" 18 %} Taklifnoma</button>
+        <button type="button" :class="{ 'is-on': s.mode === 'thanks' }" @click="set('mode', 'thanks')">{% icon "heart" 18 %} Rahmat sahifasi</button>
+        <span class="seg__pill" :style="s.mode === 'thanks' ? 'transform: translateX(100%)' : ''"></span>
+      </div>
+      <p class="hint" x-show="s.mode === 'thanks'" x-cloak>To'ydan keyingi rejim: sanoq va javob formasi yashirinadi, mehmonlar rasm yuklay oladi.</p>
+
+      <ul class="toggles">
+        <li>
+          <span><b>Javob qabul qilish</b><small>Mehmonlar «Kelaman / Kelolmayman» deb javob beradi</small></span>
+          <button type="button" class="tgl" :aria-pressed="s.rsvp_open.toString()" @click="set('rsvp_open', !s.rsvp_open)"><i></i></button>
+        </li>
+        <li>
+          <span><b>Rasm yuklash</b><small>Mehmonlar to'y rasmlari va videolarini yuklaydi</small></span>
+          <button type="button" class="tgl" :aria-pressed="s.uploads_open.toString()" @click="set('uploads_open', !s.uploads_open)"><i></i></button>
+        </li>
+        <li>
+          <span><b>Tilaklarni tekshirish</b><small>Yangi tilak siz tasdiqlaguningizcha ko'rinmaydi</small></span>
+          <button type="button" class="tgl" :aria-pressed="s.wishes_need_approval.toString()" @click="set('wishes_need_approval', !s.wishes_need_approval)"><i></i></button>
+        </li>
+        <li>
+          <span><b>Ingliz tili tugmasi</b><small>Sahifada UZ / EN almashtirgich</small></span>
+          <button type="button" class="tgl" :aria-pressed="s.show_english.toString()" @click="set('show_english', !s.show_english)"><i></i></button>
+        </li>
+      </ul>
+    </section>
+    {% endif %}
+  </div>
+
+  <section class="card cols__b rise" style="--d:5">
+    <header class="card__head"><h3>So'nggi voqealar</h3></header>
+    {% if feed %}
+      <ol class="feed">
+        {% for e in feed %}
+          <li class="feed__item feed__item--{{ e.kind }}" style="--i: {{ forloop.counter0 }}">
+            <span class="feed__ic">
+              {% if e.kind == 'yes' %}{% icon "check" 16 %}{% elif e.kind == 'no' %}{% icon "x" 16 %}{% elif e.kind == 'wish' %}{% icon "heart" 16 %}{% elif e.kind == 'open' %}{% icon "eye" 16 %}{% else %}{% icon "upload" 16 %}{% endif %}
+            </span>
+            <span class="feed__text">{{ e.text }}</span>
+            <time class="feed__time">{{ e.at|oldin }}</time>
+          </li>
+        {% endfor %}
+      </ol>
+    {% else %}
+      <p class="muted">Hali hech narsa bo'lmadi. Mehmonlarga havolalarni yuboring — kim ochgani va javob bergani shu yerda ko'rinadi.</p>
+    {% endif %}
+  </section>
+</div>
+{% endif %}
+{% endblock %}

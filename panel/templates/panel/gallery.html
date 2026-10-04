@@ -1,0 +1,61 @@
+{% extends "panel/base.html" %}
+{% load panel_tags %}
+{% block title %}Galereya{% endblock %}
+{% block heading %}Galereya{% endblock %}
+{% block content %}
+<div x-data="galleryPage('{% url 'panel:gallery' %}')">
+<header class="page-head rise">
+  <div>
+    <h2 class="page-title">Galereya <span class="count">{{ photos|length }}</span></h2>
+    <p class="page-sub">Bu rasmlar taklifnomadagi «Biz haqimizda» bo'limida chiqadi. Telefonda kartalar to'plami, kompyuterda ikki ustun.</p>
+  </div>
+</header>
+
+{% if perms.invitation.add_galleryphoto %}
+<label class="dropzone rise" style="--d:1" :class="{ 'is-over': over, 'is-busy': busy }"
+       @dragover.prevent="over = true" @dragleave="over = false" @drop.prevent="over = false; send($event.dataTransfer.files)">
+  <input type="file" accept="image/*" multiple hidden @change="send($event.target.files)">
+  <span class="dropzone__ic">{% icon "upload" 30 %}</span>
+  <b x-text="busy ? 'Yuklanmoqda… ' + progress + '%' : 'Rasm qo\'shish'">Rasm qo'shish</b>
+  <small x-show="!busy">Bosing yoki rasmlarni shu yerga tashlang. Bir nechtasini birdan tanlasa bo'ladi.</small>
+  <span class="dropzone__bar" x-show="busy"><i :style="'width:' + progress + '%'"></i></span>
+</label>
+{% endif %}
+
+{% if photos %}
+  <ul class="pgrid">
+    {% for p in photos %}
+      <li class="pcard rise" style="--d: {{ forloop.counter0|add:2 }}">
+        <span class="pcard__num">{{ forloop.counter }}</span>
+        <a class="pcard__img" href="{{ p.image.url }}" target="_blank"><img src="{{ p.image.url }}" alt="{{ p.caption }}" loading="lazy"></a>
+        {% if perms.invitation.change_galleryphoto %}
+        <form method="post" action="{% url 'panel:gallery-item' p.pk %}" class="pcard__cap" x-data="{ v: '{{ p.caption|escapejs }}', saved: '{{ p.caption|escapejs }}' }"
+              @submit.prevent="saveCaption($el, v).then(() => saved = v)">
+          {% csrf_token %}<input type="hidden" name="act" value="caption">
+          <input name="caption" x-model="v" placeholder="Izoh (ixtiyoriy)" maxlength="160" @blur="if (v !== saved) $el.form.requestSubmit()">
+          <button type="submit" class="icon-btn icon-btn--sm" x-show="v !== saved" title="Saqlash">{% icon "check" 16 %}</button>
+        </form>
+        <div class="pcard__acts">
+          <form method="post" action="{% url 'panel:gallery-item' p.pk %}">{% csrf_token %}<input type="hidden" name="act" value="up">
+            <button class="icon-btn" title="Oldinga" {% if forloop.first %}disabled{% endif %}>{% icon "left" 18 %}</button></form>
+          <form method="post" action="{% url 'panel:gallery-item' p.pk %}">{% csrf_token %}<input type="hidden" name="act" value="down">
+            <button class="icon-btn" title="Orqaga" {% if forloop.last %}disabled{% endif %}>{% icon "right" 18 %}</button></form>
+          {% if perms.invitation.delete_galleryphoto %}
+          <form method="post" action="{% url 'panel:gallery-item' p.pk %}"
+                @submit.prevent="askFor({ text: 'Rasm o\'chirilsinmi?', yes: 'O\'chirish', go: () => $el.submit() })">
+            {% csrf_token %}<input type="hidden" name="act" value="delete">
+            <button class="icon-btn icon-btn--danger" title="O'chirish">{% icon "trash" 18 %}</button></form>
+          {% endif %}
+        </div>
+        {% endif %}
+      </li>
+    {% endfor %}
+  </ul>
+{% else %}
+  <div class="empty rise" style="--d:2">
+    <svg class="empty__ic" width="56" height="56"><use href="#p-photo"/></svg>
+    <p>Galereya bo'sh. Kelin-kuyovning 3–8 ta rasmi yetarli.</p>
+  </div>
+{% endif %}
+</div>
+{% endblock %}

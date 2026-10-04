@@ -39,7 +39,7 @@ UI = {
         "hours": "soat",
         "minutes": "daqiqa",
         "seconds": "soniya",
-        "today": "Bugun — o'sha kun.",
+        "today": "Bugun — to'y kuni!",
         "story_title": "Shu kungacha",
         "gallery_title": "Biz haqimizda",
         "gallery_title_thanks": "O'sha kundan",
@@ -93,6 +93,39 @@ UI = {
         "footer_note": "Sizni ko'rishdan mamnun bo'lamiz.",
         "admin_panel": "Boshqaruv paneli",
         "scroll_hint": "Pastga suring",
+        # --- yangi dizayn uchun
+        "open_invite": "Taklifnomani ochish",
+        "open_thanks": "Sahifani ochish",
+        "you_are_invited": "Siz to'yimizga taklif qilingansiz",
+        "nav_home": "Bosh",
+        "nav_time": "Vaqt",
+        "nav_place": "Manzil",
+        "nav_rsvp": "Javob",
+        "nav_wishes": "Tilaklar",
+        "nav_photos": "Rasmlar",
+        "nav_upload": "Yuklash",
+        "add_calendar": "Kalendarga qo'shish",
+        "directions": "Yo'nalishni ko'rish",
+        "call": "Qo'ng'iroq qilish",
+        "questions": "Savollar bo'lsa, qo'ng'iroq qiling",
+        "people": "kishi",
+        "change_answer": "Javobni o'zgartirish",
+        "swipe_hint": "Rasmni suring",
+        "music_on": "Musiqani yoqish",
+        "music_off": "Musiqani o'chirish",
+        "invite_title": "Sizni kutamiz",
+        "and": "va",
+        "err_name": "Ismingizni to'liqroq yozing.",
+        "err_choice": "Kelasizmi yoki yo'q — belgilang.",
+        "err_wish": "Tilagingizni yozing.",
+        "err_send": "Yuborilmadi. Internetni tekshirib, qayta urinib ko'ring.",
+        "err_name_first": "Avval ismingizni yozing — rasmlar shu nom bilan saqlanadi.",
+        "st_waiting": "navbatda",
+        "st_done": "yuklandi",
+        "too_big": "MB dan katta",
+        "drop_here": "Rasm va videolarni shu yerga tashlang",
+        "cam_denied": "Kameraga ruxsat berilmadi. Brauzer so'roviga «Ruxsat berish» deng.",
+        "cam_unsupported": "Bu brauzer kamerani qo'llab-quvvatlamaydi.",
     },
     "en": {
         "dear": "Dear",
@@ -158,6 +191,38 @@ UI = {
         "footer_note": "We would be delighted to see you.",
         "admin_panel": "Admin panel",
         "scroll_hint": "Scroll down",
+        "open_invite": "Open the invitation",
+        "open_thanks": "Open the page",
+        "you_are_invited": "You are invited to our wedding",
+        "nav_home": "Home",
+        "nav_time": "When",
+        "nav_place": "Where",
+        "nav_rsvp": "Reply",
+        "nav_wishes": "Wishes",
+        "nav_photos": "Photos",
+        "nav_upload": "Upload",
+        "add_calendar": "Add to calendar",
+        "directions": "Get directions",
+        "call": "Call",
+        "questions": "Questions? Give us a call",
+        "people": "people",
+        "change_answer": "Change my answer",
+        "swipe_hint": "Swipe the photos",
+        "music_on": "Play music",
+        "music_off": "Pause music",
+        "invite_title": "Join us",
+        "and": "and",
+        "err_name": "Please write your full name.",
+        "err_choice": "Please choose whether you can come.",
+        "err_wish": "Please write your wish.",
+        "err_send": "Not sent. Check your connection and try again.",
+        "err_name_first": "Write your name first — your files are saved under it.",
+        "st_waiting": "waiting",
+        "st_done": "uploaded",
+        "too_big": "MB limit exceeded",
+        "drop_here": "Drop photos and videos here",
+        "cam_denied": "Camera access was blocked. Allow it in the browser prompt.",
+        "cam_unsupported": "This browser does not support the camera.",
     },
 }
 
@@ -188,3 +253,84 @@ def format_date(dt, lang):
 
 def weekday(dt, lang):
     return WEEKDAYS[lang][int(dt.strftime("%w"))]
+
+# ----------------------------------------------------------------------------
+# Admin panelidan o'zgartirsa bo'ladigan yozuvlar.
+# Har bir guruh panelda alohida blok bo'lib chiqadi. Bo'sh qoldirilgan
+# maydon o'rniga yuqoridagi standart matn ko'rsatiladi.
+# ----------------------------------------------------------------------------
+
+EDITABLE = [
+    ("Ochilish oynasi", [
+        ("dear", "Mehmon ismidan oldingi so'z"),
+        ("you_are_invited", "Ism ostidagi qator"),
+        ("open_invite", "Ochish tugmasi"),
+        ("open_thanks", "Ochish tugmasi (rahmat rejimida)"),
+    ]),
+    ("Bo'lim sarlavhalari", [
+        ("countdown_title", "Sanoq bo'limi"),
+        ("today", "To'y kuni sanoq o'rniga chiqadigan yozuv"),
+        ("invite_title", "Taklif matni bo'limi"),
+        ("story_title", "Sevgi tarixi bo'limi"),
+        ("gallery_title", "Galereya bo'limi"),
+        ("gallery_title_thanks", "Galereya (rahmat rejimida)"),
+        ("event_title", "Marosim bo'limi"),
+        ("rsvp_title", "Javob bo'limi (umumiy havola)"),
+        ("rsvp_title_named", "Javob bo'limi (shaxsiy havola, {name} — mehmon ismi)"),
+        ("duas_title", "Duolar bo'limi"),
+        ("wishes_title", "Tilaklar bo'limi"),
+        ("upload_title", "Rasm yuklash bo'limi"),
+    ]),
+    ("Sarlavha ostidagi izohlar", [
+        ("rsvp_lead", "Javob bo'limi izohi"),
+        ("duas_lead", "Duolar bo'limi izohi"),
+        ("wishes_lead", "Tilaklar bo'limi izohi"),
+    ]),
+    ("Marosim ma'lumotlari", [
+        ("fact_time", "«Vaqt» yozuvi"),
+        ("fact_place", "«Joy» yozuvi"),
+        ("fact_dress", "«Kiyim» yozuvi"),
+        ("welcome_at", "«Kutib olish» yozuvi"),
+        ("starts_at", "«Boshlanishi» yozuvi"),
+        ("directions", "Xarita tugmasi"),
+        ("add_calendar", "Kalendar tugmasi"),
+    ]),
+    ("Tugmalar va javoblar", [
+        ("coming", "«Kelaman» tugmasi"),
+        ("not_coming", "«Kelolmayman» tugmasi"),
+        ("how_many", "Kishi soni savoli"),
+        ("send_answer", "Javob yuborish tugmasi"),
+        ("rsvp_done_yes", "Kelaman deganda sarlavha"),
+        ("rsvp_done_yes_text", "Kelaman deganda matn"),
+        ("rsvp_done_no", "Kelolmayman deganda sarlavha"),
+        ("rsvp_done_no_text", "Kelolmayman deganda matn"),
+        ("wish_placeholder", "Tilak maydonidagi namuna"),
+        ("send_wish", "Tilak yuborish tugmasi"),
+        ("no_wishes", "Tilak yo'qligida chiqadigan yozuv"),
+    ]),
+    ("Sahifa oxiri va menyu", [
+        ("footer_note", "Oxiridagi yozuv"),
+        ("questions", "Telefonlar ustidagi yozuv"),
+        ("nav_home", "Menyu: bosh"),
+        ("nav_time", "Menyu: vaqt"),
+        ("nav_place", "Menyu: manzil"),
+        ("nav_rsvp", "Menyu: javob"),
+        ("nav_wishes", "Menyu: tilaklar"),
+        ("nav_photos", "Menyu: rasmlar"),
+        ("nav_upload", "Menyu: yuklash"),
+    ]),
+]
+
+EDITABLE_KEYS = {key for _, items in EDITABLE for key, _ in items}
+
+
+def ui(lang, wedding=None):
+    """Standart yozuvlar + admin o'zgartirganlari."""
+    texts = dict(UI[lang])
+    custom = {}
+    if wedding is not None and isinstance(getattr(wedding, "labels", None), dict):
+        custom = wedding.labels.get(lang) or {}
+    for key, value in custom.items():
+        if key in EDITABLE_KEYS and isinstance(value, str) and value.strip():
+            texts[key] = value.strip()
+    return texts

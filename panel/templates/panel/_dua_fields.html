@@ -1,0 +1,13 @@
+{% load panel_tags %}
+<div class="grid2">
+  {% include "panel/_field.html" with f=form.title %}
+  {% include "panel/_field.html" with f=form.source %}
+</div>
+{% include "panel/_field.html" with f=form.arabic %}
+{% include "panel/_field.html" with f=form.transliteration %}
+{% include "panel/_field.html" with f=form.meaning %}
+{% include "panel/_field.html" with f=form.is_visible %}
+<details class="more"><summary>{% icon "down" 18 %} Inglizcha</summary>
+  {% include "panel/_field.html" with f=form.title_en %}
+  {% include "panel/_field.html" with f=form.meaning_en %}
+</details>

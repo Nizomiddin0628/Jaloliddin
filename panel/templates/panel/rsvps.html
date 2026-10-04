@@ -1,0 +1,59 @@
+{% extends "panel/base.html" %}
+{% load panel_tags %}
+{% block title %}Javoblar{% endblock %}
+{% block heading %}Javoblar{% endblock %}
+{% block content %}
+<div x-data="guestsPage()">
+<header class="page-head rise">
+  <div>
+    <h2 class="page-title">Javoblar <span class="count">{{ totals.all }}</span></h2>
+    <p class="page-sub">Mehmon javobni o'zgartirsa, yangi yozuv qo'shiladi — hisobda oxirgisi olinadi.</p>
+  </div>
+  <div class="page-actions">
+    <a class="btn btn--ghost" href="{% url 'panel:rsvps-csv' %}">{% icon "download" %} Excel uchun CSV</a>
+  </div>
+</header>
+
+<section class="kpis kpis--3 rise" style="--d:1">
+  <div class="kpi kpi--yes"><span class="kpi__body"><b data-count="{{ totals.people }}">{{ totals.people }}</b><small>kishi keladi</small></span></div>
+  <div class="kpi"><span class="kpi__body"><b data-count="{{ totals.yes }}">{{ totals.yes }}</b><small>ta «kelaman» javobi</small></span></div>
+  <div class="kpi kpi--no"><span class="kpi__body"><b data-count="{{ totals.no }}">{{ totals.no }}</b><small>ta «kelolmayman»</small></span></div>
+</section>
+
+<div class="toolbar rise" style="--d:2">
+  <nav class="chips">
+    {% for key, label in filters %}
+      <a href="?f={{ key }}" class="chip {% if f == key %}is-on{% endif %}">{{ label }}</a>
+    {% endfor %}
+  </nav>
+</div>
+
+{% if items %}
+  <ul class="glist">
+    {% for r in items %}
+      <li class="grow rise" style="--d: {{ forloop.counter0|add:3 }}" data-row>
+        <div class="grow__who">
+          <span class="avatar avatar--{% if r.attending %}yes{% else %}no{% endif %}">{{ r.name|initials }}</span>
+          <span class="grow__name">
+            <b>{% if r.guest %}<a href="{% url 'panel:guest-edit' r.guest.pk %}">{{ r.name }}</a>{% else %}{{ r.name }}{% endif %}</b>
+            <small>{{ r.created_at|oldin }}{% if r.phone %} · <a href="tel:{{ r.phone }}">{{ r.phone }}</a>{% endif %}{% if not r.guest %} · umumiy havola orqali{% endif %}</small>
+          </span>
+        </div>
+        <span class="status status--{% if r.attending %}yes{% else %}no{% endif %}">{% if r.attending %}Keladi · {{ r.seats }} kishi{% else %}Kelolmaydi{% endif %}</span>
+        <div class="grow__acts">
+          {% if perms.invitation.delete_rsvp %}
+            <button type="button" class="icon-btn icon-btn--danger" title="O'chirish"
+                    @click="confirmDelete($event, '{% url 'panel:rsvp-delete' r.pk %}', '{{ r.name|escapejs }} javobi')">{% icon "trash" 19 %}</button>
+          {% endif %}
+        </div>
+      </li>
+    {% endfor %}
+  </ul>
+{% else %}
+  <div class="empty rise" style="--d:3">
+    <svg class="empty__ic" width="56" height="56"><use href="#p-reply"/></svg>
+    <p>Hali javob kelmagan. Mehmonlar taklifnomadagi «Kelaman» tugmasini bosganda shu yerda paydo bo'ladi.</p>
+  </div>
+{% endif %}
+</div>
+{% endblock %}

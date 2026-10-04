@@ -1,0 +1,34 @@
+{% load panel_tags %}{% with kind=f|widget_kind %}
+<div class="fld fld--{{ kind }} {% if f.errors %}has-error{% endif %} {% if wide %}fld--wide{% endif %}">
+  {% if kind == "switch" %}
+    <label class="switch-row">
+      <span class="switch">{{ f }}<i></i></span>
+      <span class="fld__label">{{ f.label }}</span>
+    </label>
+  {% elif kind == "file" %}
+    <span class="fld__label">{{ f.label }}</span>
+    <div class="file" x-data="filePick('{% if f.value %}{{ f.value.url }}{% endif %}', '{{ f.name }}')">
+      <div class="file__preview">
+        <template x-if="isImage && url"><img :src="url" alt=""></template>
+        <template x-if="!isImage && url"><audio :src="url" controls preload="none"></audio></template>
+        <template x-if="!url"><span class="file__empty">{% icon "upload" 26 %}</span></template>
+      </div>
+      <div class="file__body">
+        <label class="btn btn--ghost btn--sm">
+          {% icon "upload" 18 %}<span x-text="url ? 'Almashtirish' : 'Fayl tanlash'">Fayl tanlash</span>
+          <input type="file" name="{{ f.html_name }}" id="{{ f.id_for_label }}" {% if f.field.widget.attrs.accept %}accept="{{ f.field.widget.attrs.accept }}"{% endif %} hidden @change="pick($event)">
+        </label>
+        <span class="file__name" x-text="fileName"></span>
+        {% if f.value %}
+          <label class="file__clear" x-show="!fresh"><input type="checkbox" name="{{ f.html_name }}-clear" value="1"> O'chirish</label>
+        {% endif %}
+      </div>
+    </div>
+  {% else %}
+    <label class="fld__label" for="{{ f.id_for_label }}">{{ f.label }}{% if f.field.required %} <b class="req">*</b>{% endif %}</label>
+    {{ f }}
+  {% endif %}
+  {% if f.help_text %}<p class="fld__help">{{ f.help_text }}</p>{% endif %}
+  {% for e in f.errors %}<p class="fld__err">{{ e }}</p>{% endfor %}
+</div>
+{% endwith %}

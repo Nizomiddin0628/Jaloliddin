@@ -81,7 +81,7 @@ def invitation_page(request):
             )
 
     lang = i18n.clean_lang(request.GET.get("lang"))
-    L = i18n.UI[lang]
+    L = i18n.ui(lang, wedding)
 
     local = timezone.localtime(wedding.event_at)
     has_point = wedding.latitude is not None and wedding.longitude is not None
@@ -150,6 +150,19 @@ def invitation_page(request):
     # Til tugmasi bosilganda mehmon kodi yo'qolmasligi kerak
     keep = f"g={quote(code)}&" if code else ""
 
+    contacts = [
+        {"name": n, "phone": p, "tel": "".join(ch for ch in p if ch.isdigit() or ch == "+")}
+        for n, p in (
+            (wedding.contact_one_name, wedding.contact_one_phone),
+            (wedding.contact_two_name, wedding.contact_two_phone),
+        )
+        if p
+    ]
+    initials = (tx["groom"][:1] + tx["bride"][:1]).upper()
+    rsvp_heading = (
+        L["rsvp_title_named"].replace("{name}", guest.name) if guest else L["rsvp_title"]
+    )
+
     return render(
         request,
         "site/index.html",
@@ -180,6 +193,12 @@ def invitation_page(request):
             "map_embed": map_embed,
             "max_upload_mb": settings.MAX_UPLOAD_SIZE_MB,
             "site_url": settings.SITE_URL,
+            "contacts": contacts,
+            "rsvp_heading": rsvp_heading,
+            "initials": initials,
+            "event_day": local.day,
+            "event_month": i18n.MONTHS[lang][local.month - 1],
+            "event_year": local.year,
         },
     )
 

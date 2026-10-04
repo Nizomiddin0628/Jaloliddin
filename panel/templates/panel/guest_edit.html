@@ -1,0 +1,92 @@
+{% extends "panel/base.html" %}
+{% load panel_tags %}
+{% block title %}{{ g.display_name }}{% endblock %}
+{% block heading %}{{ g.display_name }}{% endblock %}
+{% block content %}
+<div x-data="guestsPage()">
+<a class="back" href="{% url 'panel:guests' %}">{% icon "left" 18 %} Mehmonlar</a>
+
+<header class="page-head rise">
+  <div class="who">
+    <span class="avatar avatar--lg avatar--{{ status }}">{{ g.name|initials }}</span>
+    <div>
+      <h2 class="page-title">{{ g.display_name }}</h2>
+      <span class="status status--{{ status }}">{{ status_label }}</span>
+    </div>
+  </div>
+</header>
+
+<div class="cols cols--edit">
+  <section class="card cols__a rise" style="--d:1">
+    <header class="card__head"><h3>Ma'lumotlar</h3></header>
+    <form method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+      <fieldset {% if not can_edit %}disabled{% endif %} class="plain">
+        <div class="grid2">
+          {% include "panel/_field.html" with f=form.name %}
+          {% include "panel/_field.html" with f=form.honorific %}
+        </div>
+        <div class="grid2">
+          {% include "panel/_field.html" with f=form.seats %}
+          {% include "panel/_field.html" with f=form.note %}
+        </div>
+        <details class="more" {% if g.hero_image or g.music %}open{% endif %}>
+          <summary>{% icon "down" 18 %} Shu mehmonga alohida rasm va musiqa</summary>
+          <div class="grid2">
+            {% include "panel/_field.html" with f=form.hero_image %}
+            {% include "panel/_field.html" with f=form.music %}
+          </div>
+        </details>
+        {% if can_edit %}
+        <div class="form-foot">
+          <button class="btn btn--primary" type="submit">{% icon "check" %} Saqlash</button>
+          <a class="btn btn--ghost" href="{% url 'panel:guests' %}">Bekor qilish</a>
+        </div>
+        {% endif %}
+      </fieldset>
+    </form>
+  </section>
+
+  <div class="cols__b">
+    <section class="card link-card rise" style="--d:2">
+      <header class="card__head"><h3>Shaxsiy havola</h3></header>
+      {% if qr %}<img class="qr-img" src="{{ qr }}" alt="QR kod" width="200" height="200">{% endif %}
+      <p class="qr-link">{{ g.invite_url }}</p>
+      <div class="btn-col">
+        <button type="button" class="btn btn--primary btn--wide" @click="copy('{{ g.invite_url|escapejs }}')">{% icon "copy" %} Havolani nusxalash</button>
+        <a class="btn btn--ghost btn--wide" target="_blank" rel="noopener"
+           href="https://t.me/share/url?url={{ g.invite_url|urlencode:'' }}&text={{ 'Hurmatli '|urlencode }}{{ g.display_name|urlencode }}{{ "! Sizni to'yimizga taklif qilamiz."|urlencode }}">{% icon "send" %} Telegram orqali yuborish</a>
+        <a class="btn btn--ghost btn--wide" href="{% url 'panel:guest-qr' g.pk %}?download=1">{% icon "download" %} QR kodni yuklab olish</a>
+        <a class="btn btn--ghost btn--wide" href="{{ g.invite_url }}" target="_blank">{% icon "external" %} Mehmon ko'zi bilan ochish</a>
+      </div>
+      <p class="muted small">
+        {% if g.open_count %}Havola {{ g.open_count }} marta ochilgan, birinchi marta {{ g.opened_at|oldin }}.{% else %}Havola hali ochilmagan.{% endif %}
+      </p>
+    </section>
+
+    {% if history %}
+    <section class="card rise" style="--d:3">
+      <header class="card__head"><h3>Javoblar tarixi</h3></header>
+      <ol class="feed">
+        {% for r in history %}
+          <li class="feed__item feed__item--{% if r.attending %}yes{% else %}no{% endif %}">
+            <span class="feed__ic">{% if r.attending %}{% icon "check" 16 %}{% else %}{% icon "x" 16 %}{% endif %}</span>
+            <span class="feed__text">{% if r.attending %}Keladi · {{ r.seats }} kishi{% else %}Kelolmaydi{% endif %}</span>
+            <time class="feed__time">{{ r.created_at|oldin }}</time>
+          </li>
+        {% endfor %}
+      </ol>
+    </section>
+    {% endif %}
+
+    {% if perms.invitation.delete_guest %}
+      <form method="post" action="{% url 'panel:guest-delete' g.pk %}" class="danger-zone"
+            @submit.prevent="askFor({ text: '{{ g.display_name|escapejs }} o\'chirilsinmi? Havolasi ishlamay qoladi.', yes: 'O\'chirish', go: () => $el.submit() })">
+        {% csrf_token %}
+        <button type="submit" class="btn btn--danger-ghost btn--wide">{% icon "trash" %} Mehmonni o'chirish</button>
+      </form>
+    {% endif %}
+  </div>
+</div>
+</div>
+{% endblock %}

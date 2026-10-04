@@ -15,6 +15,12 @@ from .imaging import optimize
 private_storage = FileSystemStorage(location=settings.PRIVATE_MEDIA_ROOT)
 
 
+def get_private_storage():
+    # Funksiya orqali beriladi — shunda migratsiyaga kompyuter yo'li
+    # (C:/Users/... yoki /home/...) yozilib qolmaydi.
+    return private_storage
+
+
 def _rand_code(length=8):
     alphabet = "abcdefghjkmnpqrstuvwxyz23456789"
     return "".join(secrets.choice(alphabet) for _ in range(length))
@@ -107,6 +113,11 @@ class Wedding(models.Model):
     show_english = models.BooleanField(
         "Ingliz tili tugmasi", default=True,
         help_text="Belgini olsangiz sahifada til almashtirish tugmasi ko'rinmaydi."
+    )
+
+    labels = models.JSONField(
+        "Sahifa yozuvlari", default=dict, blank=True,
+        help_text="Bo'lim sarlavhalari va tugma yozuvlari: {\"uz\": {...}, \"en\": {...}}",
     )
 
     updated_at = models.DateTimeField(auto_now=True)
@@ -258,7 +269,7 @@ class GuestUpload(models.Model):
     )
     uploader_name = models.CharField("Yuklovchi", max_length=120)
     folder_name = models.CharField("Papka", max_length=140, blank=True)
-    file = models.FileField("Fayl", upload_to=guest_upload_path, storage=private_storage)
+    file = models.FileField("Fayl", upload_to=guest_upload_path, storage=get_private_storage)
     original_name = models.CharField("Asl nomi", max_length=255, blank=True)
     content_type = models.CharField("Turi", max_length=100, blank=True)
     size = models.BigIntegerField("Hajmi (bayt)", default=0)

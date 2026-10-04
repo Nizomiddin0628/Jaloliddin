@@ -1,0 +1,131 @@
+{% extends "panel/base.html" %}
+{% load panel_tags %}
+{% block title %}Mehmonlar{% endblock %}
+{% block heading %}Mehmonlar{% endblock %}
+{% block content %}
+<div x-data="guestsPage()" x-init="if (location.hash === '#qoshish') adding = true">
+
+<header class="page-head rise">
+  <div>
+    <h2 class="page-title">Mehmonlar <span class="count">{{ counts.all }}</span></h2>
+    <p class="page-sub">Har bir mehmonga alohida havola. Havola ochilganda sahifa «Hurmatli …» deb murojaat qiladi.</p>
+  </div>
+  <div class="page-actions">
+    {% if perms.invitation.add_guest %}
+      <button type="button" class="btn btn--primary" @click="adding = !adding" :class="{ 'is-active': adding }">{% icon "plus" %} Mehmon qo'shish</button>
+    {% endif %}
+    <a class="btn btn--ghost" href="{% url 'panel:guests-csv' %}" title="Excel'da ochiladi">{% icon "download" %} CSV</a>
+    <a class="btn btn--ghost" href="{% url 'panel:guests-qr-zip' %}">{% icon "qr" %} QR kodlar</a>
+  </div>
+</header>
+
+{% if perms.invitation.add_guest %}
+<section class="card add-card" id="qoshish" x-show="adding" x-cloak x-transition:enter="drop-in" x-transition:enter-start="drop-from" x-transition:enter-end="drop-to">
+  <div class="seg seg--sm" role="tablist">
+    <button type="button" :class="{ 'is-on': mode === 'one' }" @click="mode = 'one'">Bitta mehmon</button>
+    <button type="button" :class="{ 'is-on': mode === 'many' }" @click="mode = 'many'">Ro'yxat bilan</button>
+    <span class="seg__pill" :style="mode === 'many' ? 'transform: translateX(100%)' : ''"></span>
+  </div>
+
+  <form method="post" action="{% url 'panel:guest-add' %}" enctype="multipart/form-data" x-show="mode === 'one'" class="add-one">
+    {% csrf_token %}
+    <div class="grid3">
+      {% include "panel/_field.html" with f=form.name %}
+      {% include "panel/_field.html" with f=form.honorific %}
+      {% include "panel/_field.html" with f=form.seats %}
+    </div>
+    {% include "panel/_field.html" with f=form.note %}
+    <div class="form-foot">
+      <button type="submit" class="btn btn--primary">{% icon "check" %} Saqlash</button>
+      <span class="muted small">Havola va QR kod o'zi yaratiladi.</span>
+    </div>
+  </form>
+
+  <form method="post" action="{% url 'panel:guest-bulk' %}" x-show="mode === 'many'" x-cloak x-data="{ text: '' }">
+    {% csrf_token %}
+    <div class="fld">
+      <label class="fld__label" for="id_lines">{{ bulk.lines.label }}</label>
+      <textarea name="lines" id="id_lines" rows="7" x-model="text" placeholder="{{ bulk.lines.field.widget.attrs.placeholder }}"></textarea>
+      <p class="fld__help">{{ bulk.lines.help_text }}</p>
+    </div>
+    <div class="form-foot">
+      <button type="submit" class="btn btn--primary" :disabled="!text.trim()">
+        {% icon "check" %} <span x-text="'Qo\'shish' + (lines(text) ? ' (' + lines(text) + ' ta)' : '')">Qo'shish</span>
+      </button>
+    </div>
+  </form>
+</section>
+{% endif %}
+
+<div class="toolbar rise" style="--d:1">
+  <nav class="chips" aria-label="Saralash">
+    {% for key, label in filters %}
+      <a href="?f={{ key }}{% if q %}&q={{ q|urlencode }}{% endif %}" class="chip {% if f == key %}is-on{% endif %}">
+        {{ label }} <em>{% if key == 'all' %}{{ counts.all }}{% elif key == 'wait' %}{{ counts.wait }}{% elif key == 'yes' %}{{ counts.yes }}{% elif key == 'no' %}{{ counts.no }}{% else %}{{ counts.unseen }}{% endif %}</em>
+      </a>
+    {% endfor %}
+  </nav>
+  <form class="search" method="get" x-data @input.debounce.450ms="$el.requestSubmit()">
+    <input type="hidden" name="f" value="{{ f }}">
+    {% icon "search" 18 %}
+    <input type="search" name="q" value="{{ q }}" placeholder="Ism yoki izoh bo'yicha qidirish" aria-label="Qidirish">
+  </form>
+</div>
+
+{% if rows %}
+  <ul class="glist">
+    {% for r in rows %}
+      {% with g=r.g %}
+      <li class="grow rise" style="--d: {{ forloop.counter0|add:2 }}" data-row>
+        <a class="grow__who" href="{% url 'panel:guest-edit' g.pk %}">
+          <span class="avatar avatar--{{ r.status }}">{{ g.name|initials }}</span>
+          <span class="grow__name">
+            <b>{{ g.display_name }}</b>
+            <small>{{ g.seats }} kishiga{% if g.note %} · {{ g.note }}{% endif %}</small>
+          </span>
+        </a>
+        <span class="status status--{{ r.status }}">{{ r.label }}</span>
+        <div class="grow__acts">
+          <button type="button" class="icon-btn" title="Havolani nusxalash" @click="copy('{{ g.invite_url|escapejs }}')">{% icon "copy" 19 %}</button>
+          <a class="icon-btn" title="Telegram orqali yuborish" target="_blank" rel="noopener"
+             href="https://t.me/share/url?url={{ g.invite_url|urlencode:'' }}&text={{ 'Hurmatli '|urlencode }}{{ g.display_name|urlencode }}{{ "! Sizni to'yimizga taklif qilamiz."|urlencode }}">{% icon "send" 19 %}</a>
+          <button type="button" class="icon-btn" title="QR kod" @click="qr = { name: '{{ g.display_name|escapejs }}', url: '{{ g.invite_url|escapejs }}', img: '{% url 'panel:guest-qr' g.pk %}' }">{% icon "qr" 19 %}</button>
+          <a class="icon-btn" title="Tahrirlash" href="{% url 'panel:guest-edit' g.pk %}">{% icon "edit" 19 %}</a>
+          {% if perms.invitation.delete_guest %}
+            <button type="button" class="icon-btn icon-btn--danger" title="O'chirish"
+                    @click="confirmDelete($event, '{% url 'panel:guest-delete' g.pk %}', '{{ g.display_name|escapejs }}')">{% icon "trash" 19 %}</button>
+          {% endif %}
+        </div>
+      </li>
+      {% endwith %}
+    {% endfor %}
+  </ul>
+{% else %}
+  <div class="empty rise" style="--d:2">
+    <svg class="empty__ic" width="56" height="56"><use href="#p-users"/></svg>
+    {% if q or f != 'all' %}
+      <p>Bu saralashda mehmon topilmadi.</p>
+      <a class="btn btn--ghost" href="{% url 'panel:guests' %}">Saralashni tozalash</a>
+    {% else %}
+      <p>Hali mehmon yo'q. Birinchi mehmonni qo'shing — unga shaxsiy havola tayyor bo'ladi.</p>
+      {% if perms.invitation.add_guest %}<button type="button" class="btn btn--primary" @click="adding = true; window.scrollTo({ top: 0, behavior: 'smooth' })">{% icon "plus" %} Mehmon qo'shish</button>{% endif %}
+    {% endif %}
+  </div>
+{% endif %}
+
+{# QR oynasi #}
+<div class="modal-bg" x-show="qr" x-cloak x-transition.opacity @click.self="qr = null">
+  <div class="modal" x-show="qr" x-transition.scale.95>
+    <button type="button" class="icon-btn modal__x" @click="qr = null" aria-label="Yopish">{% icon "x" %}</button>
+    <h3 class="modal__title" x-text="qr && qr.name"></h3>
+    <img class="qr-img" :src="qr && qr.img" alt="QR kod" width="240" height="240">
+    <p class="qr-link" x-text="qr && qr.url"></p>
+    <div class="modal__btns">
+      <button type="button" class="btn btn--ghost" @click="copy(qr.url)">{% icon "copy" %} Nusxalash</button>
+      <a class="btn btn--primary" :href="qr && (qr.img + '?download=1')">{% icon "download" %} PNG yuklab olish</a>
+    </div>
+    <p class="muted small">Qog'oz taklifnoma orqasiga bosib chiqarsangiz bo'ladi.</p>
+  </div>
+</div>
+</div>
+{% endblock %}
