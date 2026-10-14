@@ -64,21 +64,6 @@
       </p>
     </section>
 
-    {% if history %}
-    <section class="card rise" style="--d:3">
-      <header class="card__head"><h3>Javoblar tarixi</h3></header>
-      <ol class="feed">
-        {% for r in history %}
-          <li class="feed__item feed__item--{% if r.attending %}yes{% else %}no{% endif %}">
-            <span class="feed__ic">{% if r.attending %}{% icon "check" 16 %}{% else %}{% icon "x" 16 %}{% endif %}</span>
-            <span class="feed__text">{% if r.attending %}Keladi · {{ r.seats }} kishi{% else %}Kelolmaydi{% endif %}</span>
-            <time class="feed__time">{{ r.created_at|oldin }}</time>
-          </li>
-        {% endfor %}
-      </ol>
-    </section>
-    {% endif %}
-
     {% if perms.invitation.delete_guest %}
       <form method="post" action="{% url 'panel:guest-delete' g.pk %}" class="danger-zone"
             @submit.prevent="askFor({ text: '{{ g.display_name|escapejs }} o\'chirilsinmi? Havolasi ishlamay qoladi.', yes: 'O\'chirish', go: () => $el.submit() })">

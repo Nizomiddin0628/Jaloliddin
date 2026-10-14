@@ -24,9 +24,9 @@ from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_POST
 
 from invitation import i18n
-from invitation.models import Dua, GalleryPhoto, Guest, GuestUpload, Rsvp, TimelineEvent, Wedding, Wish
+from invitation.models import Dua, GalleryPhoto, Guest, GuestUpload, Wedding, Wish
 
-from .forms import BulkGuestForm, DuaForm, GalleryCaptionForm, GuestForm, TimelineForm, WeddingForm
+from .forms import BulkGuestForm, DuaForm, GalleryCaptionForm, GuestForm, WeddingForm
 
 # ------------------------------------------------------------------ yordamchilar
 
@@ -56,15 +56,46 @@ def is_ajax(request):
     return request.headers.get("x-requested-with") == "fetch"
 
 
-def get_wedding():
-    return Wedding.objects.filter(is_active=True).first() or Wedding.objects.first()
+def allowed_weddings(user):
+    """
+    Foydalanuvchi qaysi to'ylarni boshqaradi. Super admin — hammasini,
+    qolganlar faqat o'ziga biriktirilganini. Hech biriga biriktirilmagan
+    xodim esa hech narsa ko'rmaydi — boshqa tomonning mehmonlari,
+    javoblari va rasmlari unga ochilmaydi.
+    """
+    if not user.is_authenticated:
+        return Wedding.objects.none()
+    if user.is_superuser:
+        return Wedding.objects.all()
+    return Wedding.objects.filter(editors=user)
+
+
+def current_wedding(request):
+    """
+    Panelda hozir ochiq turgan to'y. Yuqoridagi almashtirgichdan tanlanadi
+    (?toy=kelin) va seansda eslab qolinadi, shunda har sahifada qayta
+    tanlash shart emas.
+    """
+    qs = allowed_weddings(request.user)
+    slug = (request.GET.get("toy") or request.session.get("panel_toy") or "").strip()
+    w = qs.filter(slug=slug).first() if slug else None
+    if w is None:
+        w = qs.first()
+    if w is not None and request.session.get("panel_toy") != w.slug:
+        request.session["panel_toy"] = w.slug
+    return w
 
 
 def need_wedding(request):
-    w = get_wedding()
+    w = current_wedding(request)
     if not w:
         messages.info(request, "Avval to'y ma'lumotlarini kiriting.")
     return w
+
+
+def only(model, request, **kw):
+    """Shu to'yga tegishli yozuvlar. Hamma so'rov shundan o'tadi."""
+    return model.objects.filter(wedding=current_wedding(request), **kw)
 
 
 def qr_png(text, box=10):
@@ -99,15 +130,10 @@ def move(model, pk, direction, **scope):
 
 
 def guest_status(guest):
-    """Mehmon kartasidagi holat yozuvi."""
-    rsvp = guest.latest_rsvp
-    if rsvp is None:
-        if guest.open_count:
-            return "opened", f"Ochgan · {guest.open_count} marta"
-        return "unseen", "Hali ochmagan"
-    if rsvp.attending:
-        return "yes", f"Keladi · {rsvp.seats} kishi"
-    return "no", "Kelolmaydi"
+    """Mehmon kartasidagi holat yozuvi — havolani ochgan-ochmagani."""
+    if guest.open_count:
+        return "opened", f"Ochgan · {guest.open_count} marta"
+    return "unseen", "Hali ochmagan"
 
 
 def back(request, fallback):
@@ -140,7 +166,8 @@ def login_view(request):
                 return redirect(nxt)
             return redirect("panel:home")
 
-    return render(request, "panel/login.html", {"error": error, "username": username, "w": get_wedding()})
+    return render(request, "panel/login.html", {"error": error, "username": username,
+         "w": Wedding.objects.filter(is_default=True).first() or Wedding.objects.first()})
 
 
 @require_POST
@@ -154,47 +181,34 @@ def logout_view(request):
 
 @panel_view()
 def home(request):
-    w = get_wedding()
-    guests = Guest.objects.all()
+    w = current_wedding(request)
+    guests = Guest.objects.filter(wedding=w)
+    wishes = Wish.objects.filter(wedding=w)
+    uploads = GuestUpload.objects.filter(wedding=w)
+
     total_guests = guests.count()
     opened = guests.filter(open_count__gt=0).count()
+    not_opened = max(total_guests - opened, 0)
 
-    # Har bir mehmonning eng oxirgi javobi hisoblanadi; havolasiz javoblar alohida
-    latest = {}
-    for r in Rsvp.objects.order_by("created_at"):
-        key = f"g{r.guest_id}" if r.guest_id else f"r{r.pk}"
-        latest[key] = r
-    answers = list(latest.values())
-    yes = [r for r in answers if r.attending]
-    no = [r for r in answers if not r.attending]
-    people = sum(r.seats for r in yes)
-    answered_guests = len({r.guest_id for r in answers if r.guest_id})
-    waiting = max(total_guests - answered_guests, 0)
-
-    # Donut diagramma uchun ulushlar (aylana uzunligi 100 deb olinadi)
-    parts_total = len(yes) + len(no) + waiting or 1
+    # Donut: taklifnomani kim ochgan. Aylana uzunligi 100 deb olinadi.
+    parts_total = total_guests or 1
     donut = []
     offset = 25
-    for key, count in (("yes", len(yes)), ("no", len(no)), ("wait", waiting)):
+    for key, count in (("yes", opened), ("wait", not_opened)):
         share = round(count * 100 / parts_total, 2)
         donut.append({"key": key, "share": share, "gap": round(100 - share, 2), "offset": offset})
         offset = (offset - share) % 100
 
     # So'nggi voqealar
     feed = []
-    for r in Rsvp.objects.select_related("guest").order_by("-created_at")[:8]:
-        feed.append({
-            "at": r.created_at, "kind": "yes" if r.attending else "no",
-            "text": f"{r.name} — " + (f"keladi, {r.seats} kishi" if r.attending else "kelolmaydi"),
-        })
-    for x in Wish.objects.order_by("-created_at")[:6]:
+    for x in wishes.order_by("-created_at")[:8]:
         feed.append({
             "at": x.created_at, "kind": "wish",
             "text": f"{x.name} tilak qoldirdi" + ("" if x.is_visible else " · tasdiq kutmoqda"),
         })
-    for g in guests.filter(opened_at__isnull=False).order_by("-opened_at")[:6]:
+    for g in guests.filter(opened_at__isnull=False).order_by("-opened_at")[:8]:
         feed.append({"at": g.opened_at, "kind": "open", "text": f"{g.display_name} taklifnomani ochdi"})
-    for u in (GuestUpload.objects.values("uploader_name").annotate(n=Count("id"), at=Max("created_at"))
+    for u in (uploads.values("uploader_name").annotate(n=Count("id"), at=Max("created_at"))
               .order_by("-at")[:4]):
         feed.append({"at": u["at"], "kind": "upload", "text": f"{u['uploader_name']} {u['n']} ta fayl yukladi"})
     feed.sort(key=lambda x: x["at"], reverse=True)
@@ -210,13 +224,11 @@ def home(request):
         "st": {
             "guests": total_guests,
             "opened": opened,
+            "not_opened": not_opened,
             "opened_pct": round(opened * 100 / total_guests) if total_guests else 0,
-            "yes": len(yes),
-            "no": len(no),
-            "people": people,
-            "waiting": waiting,
-            "wishes_pending": Wish.objects.filter(is_visible=False).count(),
-            "uploads": GuestUpload.objects.count(),
+            "wishes": wishes.count(),
+            "wishes_pending": wishes.filter(is_visible=False).count(),
+            "uploads": uploads.count(),
         },
         "donut": donut,
         "feed": feed[:12],
@@ -227,7 +239,7 @@ def home(request):
 @require_POST
 def toggle(request):
     """Bosh sahifadagi almashtirgichlar. JSON qaytaradi."""
-    w = get_wedding()
+    w = current_wedding(request)
     if not w:
         return JsonResponse({"ok": False, "detail": "To'y topilmadi."}, status=404)
     try:
@@ -235,7 +247,7 @@ def toggle(request):
     except ValueError:
         data = request.POST
     field = data.get("field")
-    allowed = {"rsvp_open", "uploads_open", "wishes_need_approval", "show_english"}
+    allowed = {"uploads_open", "wishes_need_approval", "show_english"}
     if field in allowed:
         setattr(w, field, bool(data.get("value")))
     elif field == "mode" and data.get("value") in (Wedding.MODE_INVITATION, Wedding.MODE_THANKS):
@@ -251,7 +263,7 @@ def toggle(request):
 
 @panel_view("view_wedding")
 def wedding_edit(request):
-    w = get_wedding()
+    w = current_wedding(request)
     if w is None and not request.user.has_perm("invitation.add_wedding"):
         return render(request, "panel/denied.html", status=403)
     can_edit = request.user.has_perm("invitation.change_wedding" if w else "invitation.add_wedding")
@@ -281,7 +293,7 @@ def wedding_edit(request):
 @panel_view("view_wedding")
 def labels(request):
     """Bo'lim sarlavhalari va tugma yozuvlarini o'zgartirish."""
-    w = get_wedding()
+    w = current_wedding(request)
     if not w:
         messages.info(request, "Avval to'y ma'lumotlarini kiriting.")
         return redirect("panel:wedding")
@@ -327,34 +339,27 @@ def labels(request):
 
 @panel_view("view_guest")
 def guests(request):
-    w = get_wedding()
+    w = current_wedding(request)
     q = request.GET.get("q", "").strip()
     f = request.GET.get("f", "all")
 
-    qs = Guest.objects.prefetch_related(
-        Prefetch("rsvps", queryset=Rsvp.objects.order_by("-created_at"), to_attr="rsvp_list")
-    ).order_by("-created_at")
+    qs = Guest.objects.filter(wedding=w).order_by("-created_at")
     if q:
         qs = qs.filter(Q(name__icontains=q) | Q(note__icontains=q) | Q(code__icontains=q))
 
     rows = []
-    counts = {"all": 0, "wait": 0, "yes": 0, "no": 0, "unseen": 0}
+    counts = {"all": 0, "opened": 0, "unseen": 0}
     for g in qs:
-        g.latest_rsvp = g.rsvp_list[0] if g.rsvp_list else None
         key, label = guest_status(g)
-        bucket = {"yes": "yes", "no": "no"}.get(key, "wait")
         counts["all"] += 1
-        counts[bucket] += 1
-        if key == "unseen":
-            counts["unseen"] += 1
-        if f == "all" or f == bucket or (f == "unseen" and key == "unseen"):
+        counts[key] += 1
+        if f == "all" or f == key:
             rows.append({"g": g, "status": key, "label": label})
 
     return render(request, "panel/guests.html", {
         "w": w, "nav": "guests", "rows": rows, "q": q, "f": f, "counts": counts,
         "form": GuestForm(), "bulk": BulkGuestForm(),
-        "filters": [("all", "Hammasi"), ("wait", "Javob kutilmoqda"), ("yes", "Keladi"),
-                    ("no", "Kelmaydi"), ("unseen", "Ochmagan")],
+        "filters": [("all", "Hammasi"), ("opened", "Ochgan"), ("unseen", "Ochmagan")],
     })
 
 
@@ -395,7 +400,7 @@ def guest_bulk(request):
 
 @panel_view("view_guest")
 def guest_edit(request, pk):
-    g = get_object_or_404(Guest, pk=pk)
+    g = get_object_or_404(Guest, pk=pk, wedding=current_wedding(request))
     can_edit = request.user.has_perm("invitation.change_guest")
     if request.method == "POST" and can_edit:
         form = GuestForm(request.POST, request.FILES, instance=g)
@@ -408,21 +413,19 @@ def guest_edit(request, pk):
             return redirect("panel:guests")
     else:
         form = GuestForm(instance=g)
-    g.latest_rsvp = g.rsvps.order_by("-created_at").first()
     key, label = guest_status(g)
     qr = qr_png(g.invite_url, box=8)
     return render(request, "panel/guest_edit.html", {
         "g": g, "form": form, "nav": "guests", "can_edit": can_edit,
         "status": key, "status_label": label,
         "qr": "data:image/png;base64," + base64.b64encode(qr).decode() if qr else "",
-        "history": g.rsvps.order_by("-created_at"),
     })
 
 
 @panel_view("delete_guest")
 @require_POST
 def guest_delete(request, pk):
-    g = get_object_or_404(Guest, pk=pk)
+    g = get_object_or_404(Guest, pk=pk, wedding=current_wedding(request))
     name = g.display_name
     g.delete()
     if is_ajax(request):
@@ -433,7 +436,7 @@ def guest_delete(request, pk):
 
 @panel_view("view_guest")
 def guest_qr(request, pk):
-    g = get_object_or_404(Guest, pk=pk)
+    g = get_object_or_404(Guest, pk=pk, wedding=current_wedding(request))
     png = qr_png(g.invite_url, box=14)
     if png is None:
         raise Http404("qrcode o'rnatilmagan")
@@ -448,14 +451,9 @@ def guests_csv(request):
     resp = HttpResponse(content_type="text/csv; charset=utf-8-sig")
     resp["Content-Disposition"] = 'attachment; filename="mehmonlar.csv"'
     wr = csv.writer(resp)
-    wr.writerow(["Ism", "Murojaat", "Kishi", "Izoh", "Havola", "Ochgan", "Javob", "Kelayotganlar"])
-    for g in Guest.objects.prefetch_related("rsvps").order_by("name"):
-        r = g.rsvps.order_by("-created_at").first()
-        wr.writerow([
-            g.name, g.honorific, g.seats, g.note, g.invite_url, g.open_count,
-            "" if r is None else ("Keladi" if r.attending else "Kelmaydi"),
-            r.seats if r and r.attending else "",
-        ])
+    wr.writerow(["Ism", "Murojaat", "Kishi", "Izoh", "Havola", "Necha marta ochgan"])
+    for g in Guest.objects.filter(wedding=current_wedding(request)).order_by("name"):
+        wr.writerow([g.name, g.honorific, g.seats, g.note, g.invite_url, g.open_count])
     return resp
 
 
@@ -463,7 +461,7 @@ def guests_csv(request):
 def guests_qr_zip(request):
     tmp = tempfile.NamedTemporaryFile(suffix=".zip", delete=False)
     with zipfile.ZipFile(tmp, "w") as zf:
-        for g in Guest.objects.all():
+        for g in Guest.objects.filter(wedding=current_wedding(request)):
             png = qr_png(g.invite_url, box=12)
             if png:
                 zf.writestr(f"{g.code}__{g.name}.png", png)
@@ -473,61 +471,13 @@ def guests_qr_zip(request):
     return resp
 
 
-# ------------------------------------------------------------------ javoblar
-
-
-@panel_view("view_rsvp")
-def rsvps(request):
-    f = request.GET.get("f", "all")
-    qs = Rsvp.objects.select_related("guest").order_by("-created_at")
-    yes = qs.filter(attending=True)
-    totals = {
-        "all": qs.count(),
-        "yes": yes.count(),
-        "no": qs.filter(attending=False).count(),
-        "people": yes.aggregate(s=Sum("seats"))["s"] or 0,
-    }
-    if f == "yes":
-        qs = yes
-    elif f == "no":
-        qs = qs.filter(attending=False)
-    return render(request, "panel/rsvps.html", {
-        "nav": "rsvps", "items": qs, "f": f, "totals": totals,
-        "filters": [("all", "Hammasi"), ("yes", "Keladi"), ("no", "Kelmaydi")],
-    })
-
-
-@panel_view("delete_rsvp")
-@require_POST
-def rsvp_delete(request, pk):
-    get_object_or_404(Rsvp, pk=pk).delete()
-    if is_ajax(request):
-        return JsonResponse({"ok": True})
-    messages.success(request, "Javob o'chirildi.")
-    return redirect("panel:rsvps")
-
-
-@panel_view("view_rsvp")
-def rsvps_csv(request):
-    resp = HttpResponse(content_type="text/csv; charset=utf-8-sig")
-    resp["Content-Disposition"] = 'attachment; filename="javoblar.csv"'
-    wr = csv.writer(resp)
-    wr.writerow(["Ism", "Keladimi", "Kishi soni", "Telefon", "Sana"])
-    for r in Rsvp.objects.order_by("-created_at"):
-        wr.writerow([
-            r.name, "Ha" if r.attending else "Yo'q", r.seats if r.attending else 0, r.phone,
-            timezone.localtime(r.created_at).strftime("%Y-%m-%d %H:%M"),
-        ])
-    return resp
-
-
 # ------------------------------------------------------------------ tilaklar
 
 
 @panel_view("view_wish")
 def wishes(request):
     f = request.GET.get("f", "wait")
-    base = Wish.objects.order_by("-created_at")
+    base = Wish.objects.filter(wedding=current_wedding(request)).order_by("-created_at")
     counts = {
         "wait": base.filter(is_visible=False).count(),
         "shown": base.filter(is_visible=True).count(),
@@ -536,7 +486,7 @@ def wishes(request):
     if f == "wait" and counts["wait"] == 0 and "f" not in request.GET:
         f = "all"
     qs = {"wait": base.filter(is_visible=False), "shown": base.filter(is_visible=True)}.get(f, base)
-    w = get_wedding()
+    w = current_wedding(request)
     return render(request, "panel/wishes.html", {
         "nav": "wishes", "items": qs, "f": f, "counts": counts, "w": w,
         "filters": [("wait", "Tasdiq kutmoqda"), ("shown", "Sahifada"), ("all", "Hammasi")],
@@ -546,7 +496,7 @@ def wishes(request):
 @panel_view("view_wish")
 @require_POST
 def wish_action(request, pk):
-    x = get_object_or_404(Wish, pk=pk)
+    x = get_object_or_404(Wish, pk=pk, wedding=current_wedding(request))
     act = request.POST.get("act")
     user = request.user
     if act in ("show", "hide") and user.has_perm("invitation.change_wish"):
@@ -559,7 +509,8 @@ def wish_action(request, pk):
     else:
         return JsonResponse({"ok": False, "detail": "Ruxsat yo'q."}, status=403)
     if is_ajax(request):
-        return JsonResponse({"ok": True, "msg": msg, "pending": Wish.objects.filter(is_visible=False).count()})
+        pending = Wish.objects.filter(wedding=current_wedding(request), is_visible=False).count()
+        return JsonResponse({"ok": True, "msg": msg, "pending": pending})
     messages.success(request, msg)
     return back(request, "panel:wishes")
 
@@ -567,7 +518,7 @@ def wish_action(request, pk):
 @panel_view("change_wish")
 @require_POST
 def wishes_approve_all(request):
-    n = Wish.objects.filter(is_visible=False).update(is_visible=True)
+    n = Wish.objects.filter(wedding=current_wedding(request), is_visible=False).update(is_visible=True)
     messages.success(request, f"{n} ta tilak sahifaga chiqdi.")
     return redirect("panel:wishes")
 
@@ -577,7 +528,7 @@ def wishes_approve_all(request):
 
 @panel_view("view_galleryphoto")
 def gallery(request):
-    w = get_wedding()
+    w = current_wedding(request)
     if request.method == "POST":
         if not request.user.has_perm("invitation.add_galleryphoto"):
             return render(request, "panel/denied.html", status=403)
@@ -604,7 +555,7 @@ def gallery(request):
 @panel_view("change_galleryphoto")
 @require_POST
 def gallery_item(request, pk):
-    p = get_object_or_404(GalleryPhoto, pk=pk)
+    p = get_object_or_404(GalleryPhoto, pk=pk, wedding=current_wedding(request))
     act = request.POST.get("act")
     if act in ("up", "down"):
         move(GalleryPhoto, p.pk, act, wedding=p.wedding)
@@ -620,63 +571,10 @@ def gallery_item(request, pk):
         # Sudrab tartiblash: id'lar ro'yxati keladi
         ids = [int(x) for x in request.POST.get("ids", "").split(",") if x.isdigit()]
         for i, pid in enumerate(ids):
-            GalleryPhoto.objects.filter(pk=pid).update(order=i)
+            GalleryPhoto.objects.filter(pk=pid, wedding=w).update(order=i)
     if is_ajax(request):
         return JsonResponse({"ok": True})
     return redirect("panel:gallery")
-
-
-# ------------------------------------------------------------------ sevgi tarixi
-
-
-@panel_view("view_timelineevent")
-def timeline(request):
-    w = get_wedding()
-    edit_id = request.GET.get("edit")
-    if request.method == "POST":
-        if not w:
-            return redirect("panel:wedding")
-        pk = request.POST.get("pk")
-        inst = get_object_or_404(TimelineEvent, pk=pk) if pk else None
-        perm = "change_timelineevent" if inst else "add_timelineevent"
-        if not request.user.has_perm(f"invitation.{perm}"):
-            return render(request, "panel/denied.html", status=403)
-        form = TimelineForm(request.POST, instance=inst)
-        if form.is_valid():
-            obj = form.save(commit=False)
-            obj.wedding = w
-            if not inst:
-                obj.order = (TimelineEvent.objects.filter(wedding=w).aggregate(m=Max("order"))["m"] or 0) + 1
-            obj.save()
-            messages.success(request, "Saqlandi.")
-            return redirect("panel:timeline")
-        messages.error(request, "Sarlavhani yozing.")
-    items = TimelineEvent.objects.filter(wedding=w).order_by("order", "id") if w else []
-    forms_by_id = {e.pk: TimelineForm(instance=e, prefix=f"e{e.pk}") for e in items}
-    return render(request, "panel/timeline.html", {
-        "nav": "timeline", "items": [(e, forms_by_id[e.pk]) for e in items],
-        "form": TimelineForm(), "edit_id": edit_id,
-    })
-
-
-@panel_view("change_timelineevent")
-@require_POST
-def timeline_item(request, pk):
-    e = get_object_or_404(TimelineEvent, pk=pk)
-    act = request.POST.get("act")
-    if act in ("up", "down"):
-        move(TimelineEvent, e.pk, act, wedding=e.wedding)
-    elif act == "save":
-        form = TimelineForm(request.POST, instance=e, prefix=f"e{e.pk}")
-        if form.is_valid():
-            form.save()
-            messages.success(request, "Saqlandi.")
-        else:
-            messages.error(request, "Sarlavhani yozing.")
-    elif act == "delete" and request.user.has_perm("invitation.delete_timelineevent"):
-        e.delete()
-        messages.success(request, "Voqea o'chirildi.")
-    return redirect("panel:timeline")
 
 
 # ------------------------------------------------------------------ duolar
@@ -684,12 +582,12 @@ def timeline_item(request, pk):
 
 @panel_view("view_dua")
 def duas(request):
-    w = get_wedding()
+    w = current_wedding(request)
     if request.method == "POST":
         if not w:
             return redirect("panel:wedding")
         pk = request.POST.get("pk")
-        inst = get_object_or_404(Dua, pk=pk) if pk else None
+        inst = get_object_or_404(Dua, pk=pk, wedding=w) if pk else None
         perm = "change_dua" if inst else "add_dua"
         if not request.user.has_perm(f"invitation.{perm}"):
             return render(request, "panel/denied.html", status=403)
@@ -732,15 +630,16 @@ def dua_item(request, pk):
 
 @panel_view("view_guestupload")
 def uploads(request):
+    w = current_wedding(request)
     folders = (
-        GuestUpload.objects.values("folder_name", "uploader_name")
+        GuestUpload.objects.filter(wedding=w).values("folder_name", "uploader_name")
         .annotate(count=Count("id"), total=Sum("size"), last_at=Max("created_at"),
                   videos=Count("id", filter=Q(is_video=True)))
         .order_by("-last_at")
     )
     cards = []
     for f in folders:
-        items = GuestUpload.objects.filter(folder_name=f["folder_name"])
+        items = GuestUpload.objects.filter(wedding=w, folder_name=f["folder_name"])
         cover = items.filter(is_video=False).order_by("created_at").first()
         cards.append({
             "folder": f["folder_name"], "name": f["uploader_name"], "count": f["count"],
@@ -748,18 +647,17 @@ def uploads(request):
             "size_mb": round((f["total"] or 0) / (1024 * 1024), 1),
             "last_at": f["last_at"], "cover": cover,
         })
-    total = GuestUpload.objects.aggregate(s=Sum("size"))["s"] or 0
-    w = get_wedding()
+    total = GuestUpload.objects.filter(wedding=w).aggregate(s=Sum("size"))["s"] or 0
     return render(request, "panel/uploads.html", {
         "nav": "uploads", "cards": cards, "w": w,
-        "total_files": GuestUpload.objects.count(),
+        "total_files": GuestUpload.objects.filter(wedding=w).count(),
         "total_mb": round(total / (1024 * 1024), 1),
     })
 
 
 @panel_view("view_guestupload")
 def uploads_folder(request, folder):
-    items = GuestUpload.objects.filter(folder_name=folder).order_by("-created_at")
+    items = GuestUpload.objects.filter(wedding=current_wedding(request), folder_name=folder).order_by("-created_at")
     if not items.exists():
         raise Http404
     total = items.aggregate(s=Sum("size"))["s"] or 0
@@ -772,13 +670,13 @@ def uploads_folder(request, folder):
 @panel_view("delete_guestupload")
 @require_POST
 def upload_delete(request, pk):
-    u = get_object_or_404(GuestUpload, pk=pk)
+    u = get_object_or_404(GuestUpload, pk=pk, wedding=current_wedding(request))
     folder = u.folder_name
     u.file.delete(save=False)
     u.delete()
     if is_ajax(request):
         return JsonResponse({"ok": True})
     messages.success(request, "Fayl o'chirildi.")
-    if GuestUpload.objects.filter(folder_name=folder).exists():
+    if GuestUpload.objects.filter(wedding=current_wedding(request), folder_name=folder).exists():
         return redirect("panel:uploads-folder", folder=folder)
     return redirect("panel:uploads")

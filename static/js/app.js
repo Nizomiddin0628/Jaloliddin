@@ -239,57 +239,6 @@ function slideshow() {
 
 /* ------------------------------------------------------------ javob (RSVP) */
 
-function rsvpForm() {
-  return {
-    // Shaxsiy havola bilan kelgan mehmonning ismi allaqachon ma'lum —
-    // undan qaytadan so'ramaymiz.
-    name: CFG.guestName || "",
-    attending: null,
-    seats: String(CFG.guestSeats || 1),
-    phone: "",
-    message: "",
-    sending: false,
-    sent: false,
-    error: "",
-
-    async submit() {
-      this.error = "";
-      if (this.name.trim().length < 2) {
-        this.error = "Ismingizni to'liqroq yozing.";
-        return;
-      }
-      if (this.attending === null) {
-        this.error = "Kelasizmi yoki yo'q — belgilang.";
-        return;
-      }
-      this.sending = true;
-      try {
-        const res = await fetch("/api/rsvp/", {
-          method: "POST",
-          headers: headers({ "Content-Type": "application/json" }),
-          body: JSON.stringify({
-            name: this.name.trim(),
-            attending: this.attending,
-            seats: this.attending ? Number(this.seats) : 0,
-            phone: this.phone,
-            message: this.message,
-            guest_code: CFG.guestCode,
-          }),
-        });
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error(data.detail || firstError(data) || "Yuborilmadi.");
-        this.sent = true;
-      } catch (e) {
-        this.error = e.message;
-      } finally {
-        this.sending = false;
-      }
-    },
-  };
-}
-
-/* ------------------------------------------------------------ tilaklar */
-
 function wishWall() {
   return {
     name: CFG.guestName || "",
@@ -342,6 +291,7 @@ function wishWall() {
             name: this.name.trim(),
             text: this.text.trim(),
             guest_code: CFG.guestCode,
+            toy: CFG.toy,
           }),
         });
         const data = await res.json().catch(() => ({}));
@@ -533,6 +483,7 @@ function uploader() {
         form.append("file", item.file, item.file.name);
         form.append("uploader_name", who);
         form.append("guest_code", CFG.guestCode);
+        form.append("toy", CFG.toy || "");
 
         const xhr = new XMLHttpRequest();
         xhr.open("POST", "/api/uploads/");

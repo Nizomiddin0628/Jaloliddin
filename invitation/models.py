@@ -50,7 +50,13 @@ def guest_upload_path(instance, filename):
 
 
 class Wedding(models.Model):
-    """Taklifnomaning barcha matni va sozlamalari. Odatda bitta yozuv bo'ladi."""
+    """
+    Bitta to'yning barcha matni va sozlamalari.
+
+    Saytda bir nechta to'y yashashi mumkin: kuyov tomoni va kelin tomoni.
+    Har biri o'z havolasida ochiladi (/kuyov/, /kelin/) va o'z mehmonlari,
+    rasmlari, tilaklari bilan mustaqil ishlaydi.
+    """
 
     MODE_INVITATION = "invitation"
     MODE_THANKS = "thanks"
@@ -58,6 +64,24 @@ class Wedding(models.Model):
         (MODE_INVITATION, "Taklifnoma (to'ygacha)"),
         (MODE_THANKS, "Rahmat sahifasi (to'ydan keyin)"),
     ]
+
+    slug = models.SlugField(
+        "Havoladagi nom", max_length=30, unique=True,
+        help_text="Sayt manzilida shu ko'rinadi: sayt.uz/kuyov/ — faqat lotin harflari.",
+    )
+    title = models.CharField(
+        "To'y nomi", max_length=60, blank=True,
+        help_text="Panelda ajratib turish uchun. Masalan: «Kuyov tomoni».",
+    )
+    is_default = models.BooleanField(
+        "Asosiy to'y", default=False,
+        help_text="Domen kodsiz ochilganda shu to'y ko'rsatiladi.",
+    )
+    editors = models.ManyToManyField(
+        settings.AUTH_USER_MODEL, blank=True, related_name="weddings",
+        verbose_name="Adminlar",
+        help_text="Shu to'yni boshqaradigan hisoblar. Super admin hammasini ko'radi.",
+    )
 
     is_active = models.BooleanField("Faol", default=True)
     mode = models.CharField(
@@ -123,15 +147,23 @@ class Wedding(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
+        ordering = ["-is_default", "id"]
         verbose_name = "To'y"
         verbose_name_plural = "To'y sozlamalari"
 
     def save(self, *args, **kwargs):
         optimize(self.hero_image)
         super().save(*args, **kwargs)
+        # Asosiy to'y bitta bo'ladi — yangisi belgilansa eskisidan olinadi
+        if self.is_default:
+            Wedding.objects.exclude(pk=self.pk).filter(is_default=True).update(is_default=False)
 
     def __str__(self):
-        return f"{self.groom_name} & {self.bride_name}"
+        return self.title or f"{self.groom_name} & {self.bride_name}"
+
+    @property
+    def page_url(self):
+        return f"{settings.SITE_URL}/{self.slug}/"
 
     @property
     def is_past(self):
@@ -231,7 +263,7 @@ class Guest(models.Model):
 
     @property
     def invite_url(self):
-        return f"{settings.SITE_URL}/?g={self.code}"
+        return f"{settings.SITE_URL}/{self.wedding.slug}/?g={self.code}"
 
 
 class Rsvp(models.Model):

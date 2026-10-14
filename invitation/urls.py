@@ -5,7 +5,6 @@ from . import views
 urlpatterns = [
     # Ochiq API — taklifnoma sahifasi shulardan foydalanadi
     path("wedding/", views.wedding_detail, name="wedding-detail"),
-    path("rsvp/", views.rsvp_create, name="rsvp-create"),
     path("uploads/", views.upload_create, name="upload-create"),
     path("wishes/", views.wish_create, name="wish-create"),
     # Faqat admin uchun — yuklangan fayllarni ko'rish va olish

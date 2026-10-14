@@ -1442,3 +1442,54 @@ a.kpi:hover { background: var(--surface-2); }
   .lbl { grid-template-columns: 16rem 1fr; align-items: center; gap: 1rem; }
   .lbl input { font-size: .95rem; }
 }
+
+/* ------------------------------------------------ to'y almashtirgichi
+   Ikki tomon (kuyov / kelin) bo'lganda yon panelda chiqadi. Yangi rang
+   qo'shilmadi — mavjud yashil urg'u ishlatilgan. */
+.toyswitch {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  margin: 0 14px 14px;
+  padding: 4px;
+  background: rgba(255, 255, 255, .07);
+  border-radius: var(--r-sm);
+}
+
+.toyswitch__item {
+  padding: .5rem .35rem;
+  border-radius: calc(var(--r-sm) - 4px);
+  font: 600 .78rem/1.2 var(--sans);
+  text-align: center;
+  text-decoration: none;
+  color: rgba(255, 255, 255, .62);
+  transition: background .2s var(--ease), color .2s var(--ease);
+}
+
+.toyswitch__item:hover { color: #fff; }
+
+.toyswitch__item.is-on {
+  background: var(--gold);
+  color: #fff;
+}
+
+/* Telefon uchun nusxa — yon panel yashiringanda mazmunning tepasida,
+   barmoq bilan bosiladigan o'lchamda turadi. */
+.toyswitch--mob { display: none; }
+
+@media (max-width: 900px) {
+  .side .toyswitch { display: none; }
+
+  .toyswitch--mob {
+    display: grid;
+    margin: 14px 14px 0;
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+  }
+  .toyswitch--mob .toyswitch__item {
+    padding: .7rem .5rem;
+    font-size: .85rem;
+    color: var(--ink-2);
+  }
+  .toyswitch--mob .toyswitch__item.is-on { color: #fff; }
+}

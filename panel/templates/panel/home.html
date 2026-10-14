@@ -46,40 +46,39 @@
     <span class="kpi__ring" style="--p: {{ st.opened_pct }}"><svg viewBox="0 0 36 36"><circle cx="18" cy="18" r="15.9"/><circle cx="18" cy="18" r="15.9" class="kpi__arc"/></svg><em>{{ st.opened_pct }}%</em></span>
     <span class="kpi__body"><b data-count="{{ st.guests }}">{{ st.guests }}</b><small>mehmon taklif qilingan · {{ st.opened }} tasi ochgan</small></span>
   </a>
-  <a class="kpi kpi--yes" href="{% url 'panel:rsvps' %}?f=yes">
-    <span class="kpi__body"><b data-count="{{ st.people }}">{{ st.people }}</b><small>kishi keladi · {{ st.yes }} ta javob</small></span>
+  <a class="kpi kpi--wait" href="{% url 'panel:guests' %}?f=unseen">
+    <span class="kpi__body"><b data-count="{{ st.not_opened }}">{{ st.not_opened }}</b><small>mehmon hali ochmagan</small></span>
   </a>
-  <a class="kpi kpi--no" href="{% url 'panel:rsvps' %}?f=no">
-    <span class="kpi__body"><b data-count="{{ st.no }}">{{ st.no }}</b><small>kelolmaydi</small></span>
+  <a class="kpi kpi--yes" href="{% url 'panel:wishes' %}">
+    <span class="kpi__body"><b data-count="{{ st.wishes }}">{{ st.wishes }}</b><small>tilak · {{ st.wishes_pending }} tasi tasdiq kutmoqda</small></span>
   </a>
-  <a class="kpi kpi--wait" href="{% url 'panel:guests' %}?f=wait">
-    <span class="kpi__body"><b data-count="{{ st.waiting }}">{{ st.waiting }}</b><small>mehmondan javob kutilmoqda</small></span>
+  <a class="kpi" href="{% url 'panel:uploads' %}">
+    <span class="kpi__body"><b data-count="{{ st.uploads }}">{{ st.uploads }}</b><small>esdalik fayli</small></span>
   </a>
 </section>
 
 <div class="cols">
   <div class="cols__a">
     <section class="card rise" style="--d:3">
-      <header class="card__head"><h3>Javoblar</h3><a class="link" href="{% url 'panel:rsvps' %}">Hammasi</a></header>
+      <header class="card__head"><h3>Taklifnoma</h3><a class="link" href="{% url 'panel:guests' %}">Mehmonlar</a></header>
       <div class="donut">
         <svg viewBox="0 0 42 42" class="donut__svg">
           <circle cx="21" cy="21" r="15.915" class="donut__track"/>
           {% for d in donut %}
             {% if d.share %}<circle cx="21" cy="21" r="15.915" class="donut__seg donut__seg--{{ d.key }}" stroke-dasharray="{{ d.share }} {{ d.gap }}" stroke-dashoffset="{{ d.offset }}" style="--i: {{ forloop.counter0 }}"/>{% endif %}
           {% endfor %}
-          <text x="21" y="20.5" class="donut__num">{{ st.people }}</text>
-          <text x="21" y="26" class="donut__lbl">kishi</text>
+          <text x="21" y="20.5" class="donut__num">{{ st.opened }}</text>
+          <text x="21" y="26" class="donut__lbl">ochgan</text>
         </svg>
         <ul class="legend">
-          <li><i class="legend__dot legend__dot--yes"></i>Keladi <b>{{ st.yes }}</b></li>
-          <li><i class="legend__dot legend__dot--no"></i>Kelmaydi <b>{{ st.no }}</b></li>
-          <li><i class="legend__dot legend__dot--wait"></i>Kutilmoqda <b>{{ st.waiting }}</b></li>
+          <li><i class="legend__dot legend__dot--yes"></i>Ochgan <b>{{ st.opened }}</b></li>
+          <li><i class="legend__dot legend__dot--wait"></i>Ochmagan <b>{{ st.not_opened }}</b></li>
         </ul>
       </div>
     </section>
 
     {% if perms.invitation.change_wedding %}
-    <section class="card rise" style="--d:4" x-data="toggles({ mode: '{{ w.mode }}', rsvp_open: {{ w.rsvp_open|yesno:'true,false' }}, uploads_open: {{ w.uploads_open|yesno:'true,false' }}, wishes_need_approval: {{ w.wishes_need_approval|yesno:'true,false' }}, show_english: {{ w.show_english|yesno:'true,false' }} })">
+    <section class="card rise" style="--d:4" x-data="toggles({ mode: '{{ w.mode }}', uploads_open: {{ w.uploads_open|yesno:'true,false' }}, wishes_need_approval: {{ w.wishes_need_approval|yesno:'true,false' }}, show_english: {{ w.show_english|yesno:'true,false' }} })">
       <header class="card__head"><h3>Sayt holati</h3></header>
 
       <div class="seg" role="group" aria-label="Sahifa rejimi">
@@ -87,13 +86,9 @@
         <button type="button" :class="{ 'is-on': s.mode === 'thanks' }" @click="set('mode', 'thanks')">{% icon "heart" 18 %} Rahmat sahifasi</button>
         <span class="seg__pill" :style="s.mode === 'thanks' ? 'transform: translateX(100%)' : ''"></span>
       </div>
-      <p class="hint" x-show="s.mode === 'thanks'" x-cloak>To'ydan keyingi rejim: sanoq va javob formasi yashirinadi, mehmonlar rasm yuklay oladi.</p>
+      <p class="hint" x-show="s.mode === 'thanks'" x-cloak>To'ydan keyingi rejim: sanoq yashirinadi, mehmonlar rasm yuklay oladi.</p>
 
       <ul class="toggles">
-        <li>
-          <span><b>Javob qabul qilish</b><small>Mehmonlar «Kelaman / Kelolmayman» deb javob beradi</small></span>
-          <button type="button" class="tgl" :aria-pressed="s.rsvp_open.toString()" @click="set('rsvp_open', !s.rsvp_open)"><i></i></button>
-        </li>
         <li>
           <span><b>Rasm yuklash</b><small>Mehmonlar to'y rasmlari va videolarini yuklaydi</small></span>
           <button type="button" class="tgl" :aria-pressed="s.uploads_open.toString()" @click="set('uploads_open', !s.uploads_open)"><i></i></button>

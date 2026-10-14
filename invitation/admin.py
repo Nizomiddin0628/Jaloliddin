@@ -42,12 +42,21 @@ class GalleryInline(admin.TabularInline):
 
 @admin.register(Wedding)
 class WeddingAdmin(admin.ModelAdmin):
-    inlines = [TimelineInline, GalleryInline]
-    list_display = ["__str__", "event_at", "mode", "rsvp_open", "uploads_open"]
+    inlines = [GalleryInline]
+    list_display = ["__str__", "slug", "event_at", "mode", "is_default", "uploads_open"]
+    filter_horizontal = ["editors"]
     save_on_top = True
     fieldsets = (
+        ("Tomon", {
+            "fields": ("slug", "title", "is_default", "editors"),
+            "description": (
+                "Har bir tomon alohida to'y: o'z havolasi, mehmonlari va rasmlari bilan. "
+                "«Havoladagi nom» sayt manzilida ko'rinadi — masalan kuyov yoki kelin. "
+                "«Adminlar» — shu to'yni boshqaradigan hisoblar; ular boshqa tomonni ko'rmaydi."
+            ),
+        }),
         ("Sahifa holati", {
-            "fields": ("is_active", "mode", "rsvp_open", "uploads_open",
+            "fields": ("is_active", "mode", "uploads_open",
                        "wishes_need_approval", "show_english"),
             "description": (
                 "To'y o'tgandan keyin rejimni «Rahmat sahifasi»ga o'tkazing va "

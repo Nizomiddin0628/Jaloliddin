@@ -33,9 +33,13 @@ class WeddingForm(forms.ModelForm):
 
     class Meta:
         model = Wedding
+        # slug, title, is_default va editors — to'ylarni ajratuvchi texnik
+        # maydonlar. Ularni faqat super admin Django admindan o'zgartiradi,
+        # shunda tomon egasi tasodifan havolani buzib qo'ymaydi.
         exclude = [
             "is_active", "mode", "rsvp_open", "uploads_open",
             "wishes_need_approval", "show_english", "updated_at", "labels",
+            "slug", "title", "is_default", "editors",
         ]
         widgets = {
             "event_at": DateTimeLocal(),

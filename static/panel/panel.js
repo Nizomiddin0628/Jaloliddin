@@ -122,7 +122,6 @@ function toggles(initial) {
         await post("/panel/holat/", { field, value }, true);
         const names = {
           mode: value === "thanks" ? "Rahmat sahifasi yoqildi" : "Taklifnoma rejimi yoqildi",
-          rsvp_open: value ? "Javob qabul qilish ochildi" : "Javob qabul qilish yopildi",
           uploads_open: value ? "Rasm yuklash ochildi" : "Rasm yuklash yopildi",
           wishes_need_approval: value ? "Tilaklar endi tekshiriladi" : "Tilaklar darhol chiqadi",
           show_english: value ? "Ingliz tili tugmasi yoqildi" : "Ingliz tili tugmasi o'chirildi",

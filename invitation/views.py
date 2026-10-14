@@ -10,7 +10,7 @@ from django.conf import settings
 from django.contrib.admin.views.decorators import staff_member_required
 from django.db.models import Count, Max, Min, Sum
 from django.http import FileResponse, Http404, HttpResponse
-from django.shortcuts import get_object_or_404, render
+from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.utils.text import slugify
 from rest_framework import status
@@ -46,29 +46,54 @@ class RsvpThrottle(AnonRateThrottle):
     scope = "rsvp"
 
 
-def get_wedding():
-    wedding = Wedding.objects.filter(is_active=True).prefetch_related("timeline", "gallery").first()
+def get_wedding(slug=None):
+    """
+    Havoladagi nom bo'yicha to'yni topadi. Nom berilmasa — asosiy to'y.
+    Saytda bir nechta to'y bor, shuning uchun hamma joyda aniq to'y kerak.
+    """
+    qs = Wedding.objects.filter(is_active=True).prefetch_related("gallery")
+    wedding = qs.filter(slug=slug).first() if slug else qs.first()
     if not wedding:
         raise Http404("To'y sozlamalari hali kiritilmagan.")
     return wedding
 
 
+def root_redirect(request):
+    """
+    Domen kodsiz ochilganda. Mehmon kodi bo'lsa — o'sha mehmonning to'yiga,
+    bo'lmasa asosiy to'yga yuboramiz. Eski havolalar shu tufayli ishlaydi.
+    """
+    code = request.GET.get("g", "").strip()
+    wedding = None
+    if code:
+        guest = Guest.objects.filter(code__iexact=code).select_related("wedding").first()
+        if guest:
+            wedding = guest.wedding
+    if wedding is None:
+        wedding = Wedding.objects.filter(is_active=True).first()
+    if wedding is None:
+        return render(request, "site/empty.html", status=200)
+
+    query = request.GET.urlencode()
+    return redirect(f"/{wedding.slug}/" + (f"?{query}" if query else ""))
+
+
 # ------------------------------------------------------------------ sahifa
 
 
-def invitation_page(request):
+def invitation_page(request, slug=None):
     """
     Taklifnoma sahifasi. Matn va rasmlar serverda render qilinadi —
     shuning uchun sahifa darhol ochiladi va Telegram havola preview'ida
     haqiqiy ismlar ko'rinadi.
     """
     wedding = (
-        Wedding.objects.filter(is_active=True)
-        .prefetch_related("timeline", "gallery")
+        Wedding.objects.filter(is_active=True, slug=slug)
+        .prefetch_related("gallery")
         .first()
     )
     if not wedding:
-        return render(request, "site/empty.html", status=200)
+        raise Http404("Bunday to'y yo'q.")
 
     code = request.GET.get("g", "").strip()
     guest = None
@@ -121,15 +146,6 @@ def invitation_page(request):
         "upload_hint": i18n.pick(wedding, "upload_hint", lang) or L["upload_default_hint"],
     }
 
-    story = [
-        {
-            "title": i18n.pick(e, "title", lang),
-            "date_label": i18n.pick(e, "date_label", lang),
-            "text": i18n.pick(e, "text", lang),
-        }
-        for e in wedding.timeline.all()
-    ]
-
     # Mehmonning shaxsiy rasmi va musiqasi bo'lsa o'sha, bo'lmasa umumiysi
     hero_file = (guest.hero_image if guest and guest.hero_image else wedding.hero_image)
     music_file = (guest.music if guest and guest.music else wedding.music)
@@ -177,7 +193,6 @@ def invitation_page(request):
             "tx": tx,
             "link_uz": f"?{keep}lang=uz",
             "link_en": f"?{keep}lang=en",
-            "timeline": story,
             "duas": duas,
             "gallery": photos,
             "wishes": wish_list,
@@ -207,10 +222,32 @@ def invitation_page(request):
 # ------------------------------------------------------------------ ochiq API
 
 
+def wedding_from_request(request):
+    """
+    So'rov qaysi to'yga tegishli ekanini aniqlaydi: avval «toy» maydoni
+    (sahifa uni o'zi yuboradi), keyin mehmon kodi, oxirida asosiy to'y.
+    Shu tufayli bir to'yning tilagi ikkinchisiga tushib qolmaydi.
+    """
+    data = getattr(request, "data", None) or {}
+    slug = (data.get("toy") or request.GET.get("toy") or "").strip()
+    if slug:
+        wedding = Wedding.objects.filter(is_active=True, slug=slug).first()
+        if wedding:
+            return wedding
+
+    code = (data.get("guest_code") or request.GET.get("g") or "").strip()
+    if code:
+        guest = Guest.objects.filter(code__iexact=code).select_related("wedding").first()
+        if guest:
+            return guest.wedding
+
+    return get_wedding()
+
+
 @api_view(["GET"])
 def wedding_detail(request):
     """Taklifnomaning barcha ma'lumoti. ?g=KOD bo'lsa mehmon ismi ham qaytadi."""
-    wedding = get_wedding()
+    wedding = wedding_from_request(request)
     data = WeddingSerializer(wedding, context={"request": request}).data
 
     code = request.GET.get("g", "").strip()
@@ -227,38 +264,13 @@ def wedding_detail(request):
 
 
 @api_view(["POST"])
-@throttle_classes([RsvpThrottle])
-def rsvp_create(request):
-    wedding = get_wedding()
-    if not wedding.rsvp_open:
-        return Response(
-            {"detail": "Javob qabul qilish yopilgan."}, status=status.HTTP_403_FORBIDDEN
-        )
-
-    serializer = RsvpCreateSerializer(data=request.data)
-    serializer.is_valid(raise_exception=True)
-
-    code = serializer.validated_data.pop("guest_code", "")
-    guest = Guest.objects.filter(wedding=wedding, code__iexact=code).first() if code else None
-
-    if not serializer.validated_data.get("attending"):
-        serializer.validated_data["seats"] = 0
-
-    rsvp = Rsvp.objects.create(wedding=wedding, guest=guest, **serializer.validated_data)
-    return Response(
-        {"ok": True, "id": rsvp.id, "attending": rsvp.attending},
-        status=status.HTTP_201_CREATED,
-    )
-
-
-@api_view(["POST"])
 @throttle_classes([UploadThrottle])
 def upload_create(request):
     """
     Bitta faylni qabul qiladi. Fayl asl holida saqlanadi:
     siqilmaydi, o'lchami o'zgarmaydi, formati aylantirilmaydi.
     """
-    wedding = get_wedding()
+    wedding = wedding_from_request(request)
     if not wedding.uploads_open:
         return Response(
             {"detail": "Rasm yuklash hozircha yopiq."}, status=status.HTTP_403_FORBIDDEN
@@ -321,7 +333,7 @@ def upload_create(request):
 @throttle_classes([RsvpThrottle])
 def wish_create(request):
     """Mehmon tilagi. Darhol sahifada ko'rinadi, admin yashira oladi."""
-    wedding = get_wedding()
+    wedding = wedding_from_request(request)
 
     serializer = WishCreateSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)

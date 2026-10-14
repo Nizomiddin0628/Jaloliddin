@@ -25,6 +25,17 @@
         <small>Boshqaruv paneli</small>
       </span>
     </a>
+    {% if panel_weddings|length > 1 %}
+      {# Ikki tomon: qaysi to'y bilan ishlayotganingiz shu yerda almashadi #}
+      <div class="toyswitch" role="group" aria-label="To'yni tanlash">
+        {% for t in panel_weddings %}
+          <a href="?toy={{ t.slug }}" class="toyswitch__item {% if t.pk == panel_wedding.pk %}is-on{% endif %}">
+            {{ t.title|default:t.slug }}
+          </a>
+        {% endfor %}
+      </div>
+    {% endif %}
+
     <nav class="side__nav">
       {% for item in panel_nav %}
         <a href="{% url item.url %}" class="side__link {% if nav == item.key %}is-on{% endif %}">
@@ -34,7 +45,7 @@
       {% endfor %}
     </nav>
     <div class="side__foot">
-      <a href="/" target="_blank" class="side__link">{% icon "external" %}<span>Saytni ochish</span></a>
+      <a href="{% if panel_wedding %}/{{ panel_wedding.slug }}/{% else %}/{% endif %}" target="_blank" class="side__link">{% icon "external" %}<span>Saytni ochish</span></a>
       {% if user.is_superuser %}<a href="{% url 'admin:index' %}" class="side__link side__link--dim">{% icon "list" %}<span>Django admin</span></a>{% endif %}
       <form method="post" action="{% url 'panel:logout' %}">{% csrf_token %}
         <button class="side__link" type="submit">{% icon "logout" %}<span>Chiqish · {{ user.get_username }}</span></button>
@@ -49,8 +60,19 @@
         <span class="brand__mark brand__mark--sm">{% if panel_wedding %}{{ panel_wedding.groom_name|slice:":1" }}<i>&amp;</i>{{ panel_wedding.bride_name|slice:":1" }}{% else %}T{% endif %}</span>
       </a>
       <h1 class="topbar__title">{% block heading %}Boshqaruv{% endblock %}</h1>
-      <a class="icon-btn" href="/" target="_blank" aria-label="Saytni ochish">{% icon "external" %}</a>
+      <a class="icon-btn" href="{% if panel_wedding %}/{{ panel_wedding.slug }}/{% else %}/{% endif %}" target="_blank" aria-label="Saytni ochish">{% icon "external" %}</a>
     </header>
+
+    {% if panel_weddings|length > 1 %}
+      {# Telefonda yon panel yashirin — almashtirgich mazmunning tepasida turadi #}
+      <div class="toyswitch toyswitch--mob" role="group" aria-label="To'yni tanlash">
+        {% for t in panel_weddings %}
+          <a href="?toy={{ t.slug }}" class="toyswitch__item {% if t.pk == panel_wedding.pk %}is-on{% endif %}">
+            {{ t.title|default:t.slug }}
+          </a>
+        {% endfor %}
+      </div>
+    {% endif %}
 
     <main class="content" id="content">
       {% block content %}{% endblock %}

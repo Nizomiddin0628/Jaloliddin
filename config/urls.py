@@ -13,8 +13,10 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/", include("invitation.urls")),
     path("panel/", include("panel.urls")),
-    # Taklifnoma sahifasi — saytning ildizi
-    path("", invitation_views.invitation_page, name="invitation-page"),
+    # Ildiz — mehmon kodiga yoki asosiy to'yga yo'naltiradi (eski havolalar uchun)
+    path("", invitation_views.root_redirect, name="invitation-root"),
+    # Har bir to'y o'z havolasida: /kuyov/, /kelin/
+    path("<slug:slug>/", invitation_views.invitation_page, name="invitation-page"),
 ]
 
 if settings.DEBUG:

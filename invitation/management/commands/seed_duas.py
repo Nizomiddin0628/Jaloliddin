@@ -75,26 +75,30 @@ class Command(BaseCommand):
     help = "Manbasi tasdiqlangan duolarni qo'shadi yoki yangilaydi"
 
     def handle(self, *args, **options):
-        wedding = Wedding.objects.filter(is_active=True).first()
-        if not wedding:
+        weddings = list(Wedding.objects.all())
+        if not weddings:
             self.stdout.write(self.style.ERROR("Avval to'y ma'lumotlarini kiriting."))
             return
 
-        added = updated = 0
-        for item in DUAS:
-            data = dict(item)
-            order = data.pop("order")
-            _, created = Dua.objects.update_or_create(
-                wedding=wedding, order=order, defaults=data
-            )
-            if created:
-                added += 1
-            else:
-                updated += 1
+        # Duolar har bir to'yga alohida yoziladi — keyin har tomon o'zinikini
+        # mustaqil tahrirlaydi yoki o'chiradi.
+        added = updated = removed = 0
+        for wedding in weddings:
+            for item in DUAS:
+                data = dict(item)
+                order = data.pop("order")
+                _, created = Dua.objects.update_or_create(
+                    wedding=wedding, order=order, defaults=data
+                )
+                if created:
+                    added += 1
+                else:
+                    updated += 1
 
-        removed, _ = Dua.objects.filter(
-            wedding=wedding, title__in=ESKI_SARLAVHALAR
-        ).delete()
+            n, _ = Dua.objects.filter(
+                wedding=wedding, title__in=ESKI_SARLAVHALAR
+            ).delete()
+            removed += n
 
         self.stdout.write(
             self.style.SUCCESS(
