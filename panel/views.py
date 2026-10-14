@@ -587,7 +587,7 @@ def gallery_item(request, pk):
         # Sudrab tartiblash: id'lar ro'yxati keladi
         ids = [int(x) for x in request.POST.get("ids", "").split(",") if x.isdigit()]
         for i, pid in enumerate(ids):
-            GalleryPhoto.objects.filter(pk=pid, wedding=w).update(order=i)
+            GalleryPhoto.objects.filter(pk=pid, wedding=p.wedding).update(order=i)
     if is_ajax(request):
         return JsonResponse({"ok": True})
     return redirect("panel:gallery")

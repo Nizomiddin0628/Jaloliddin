@@ -402,9 +402,12 @@
       <div class="cam__inner">
         <video x-ref="cam" playsinline muted x-show="!camError"></video>
         <p class="cam__error" x-show="camError" x-text="camError"></p>
+        <p class="cam__rec" x-show="recording" x-cloak><i></i><span x-text="recClock"></span></p>
         <div class="cam__bar">
           <button type="button" class="btn btn--ghost" @click="closeCamera()">{{ L.close }}</button>
-          <button type="button" class="btn" @click="shoot()" x-show="!camError">{{ L.shoot }}</button>
+          <button type="button" class="btn" @click="shoot()" x-show="!camError && !recording">{{ L.shoot }}</button>
+          <button type="button" class="btn btn--ghost" @click="startRec()" x-show="!camError && !recording">{{ L.rec_start }}</button>
+          <button type="button" class="btn" @click="stopRec()" x-show="recording" x-cloak>{{ L.rec_stop }}</button>
         </div>
       </div>
     </div>

@@ -323,6 +323,21 @@ function wishWall() {
  * siqilmaydi, o'lchami kichraytirilmaydi. File obyekti FormData'ga qanday
  * bo'lsa shundayligicha qo'shiladi va serverga bir xil baytlar boradi.
  */
+// Kamerada yozib olinadigan videoning eng uzun davomiyligi (sekund).
+const REC_MAX_SEC = 180;
+
+// Kamera talablari — rasm va video uchun bir xil.
+const CAM_VIDEO = {
+  facingMode: { ideal: "environment" },
+  width: { ideal: 2560 },
+  height: { ideal: 1440 },
+};
+
+// Kamerada olingan fayl nomi uchun vaqt tamg'asi.
+function camStamp() {
+  return new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-");
+}
+
 function uploader() {
   return {
     name: (function () {
@@ -344,6 +359,14 @@ function uploader() {
     camError: "",
     stream: null,
 
+    // Video yozish
+    recording: false,
+    recSec: 0,
+    recorder: null,
+    recChunks: [],
+    recBytes: 0,
+    recTimer: null,
+
     /*
      * Kamera brauzer ichida ochiladi — jonli tasvir va tugma.
      * Xavfsizlik sababli faqat https yoki localhost'da ishlaydi.
@@ -362,11 +385,7 @@ function uploader() {
       this.camOpen = true;
       try {
         this.stream = await navigator.mediaDevices.getUserMedia({
-          video: {
-            facingMode: { ideal: "environment" },
-            width: { ideal: 2560 },
-            height: { ideal: 1440 },
-          },
+          video: CAM_VIDEO,
           audio: false,
         });
         await this.$nextTick();
@@ -383,12 +402,139 @@ function uploader() {
     },
 
     closeCamera() {
+      // Yozuv ketayotgan bo'lsa — faylni saqlamasdan to'xtatamiz.
+      this.stopRecTimer();
+      if (this.recorder && this.recorder.state !== "inactive") {
+        this.recorder.onstop = null;
+        try {
+          this.recorder.stop();
+        } catch (e) {}
+      }
+      this.recorder = null;
+      this.recChunks = [];
+      this.recording = false;
       if (this.stream) {
         this.stream.getTracks().forEach((t) => t.stop());
         this.stream = null;
       }
       this.camOpen = false;
       this.camError = "";
+    },
+
+    /*
+     * Video yozish. Mikrofonga ruxsat faqat shu yerda so'raladi —
+     * rasmga oladigan mehmonga mikrofon so'rovi chiqmaydi.
+     * Oqim ovoz bilan qaytadan olinadi: ikki oqimni qo'shib yangi
+     * MediaStream yasash ba'zi brauzerlarda sahifani yiqitadi.
+     * Mikrofonga ruxsat berilmasa video ovozsiz yoziladi.
+     */
+    async startRec() {
+      if (!window.MediaRecorder || !this.stream) {
+        this.camError = "Bu brauzer video yozishni qo'llab-quvvatlamaydi.";
+        return;
+      }
+      try {
+        const withSound = await navigator.mediaDevices.getUserMedia({
+          video: CAM_VIDEO,
+          audio: true,
+        });
+        this.stream.getTracks().forEach((t) => t.stop());
+        this.stream = withSound;
+        await this.$nextTick();
+        const video = this.$refs.cam;
+        if (video) {
+          video.srcObject = withSound;
+          await video.play();
+        }
+      } catch (e) {
+        // Ovozsiz davom etamiz — eski oqim joyida qoladi.
+      }
+
+      const mime =
+        [
+          "video/webm;codecs=vp9,opus",
+          "video/webm;codecs=vp8,opus",
+          "video/webm",
+          "video/mp4",
+        ].find(
+          (t) =>
+            MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(t)
+        ) || "";
+
+      try {
+        this.recorder = new MediaRecorder(
+          this.stream,
+          mime ? { mimeType: mime } : undefined
+        );
+      } catch (e) {
+        try {
+          this.recorder = new MediaRecorder(this.stream);
+        } catch (e2) {
+          this.camError = "Video yozishni boshlab bo'lmadi.";
+          return;
+        }
+      }
+
+      this.recChunks = [];
+      this.recBytes = 0;
+      this.recSec = 0;
+      const limit = (CFG.maxUploadMb || 512) * 1024 * 1024;
+
+      this.recorder.ondataavailable = (ev) => {
+        if (!ev.data || !ev.data.size) return;
+        this.recChunks.push(ev.data);
+        this.recBytes += ev.data.size;
+        // Hajm chegarasiga yetsa — o'zi to'xtaydi, yozilgani saqlanadi.
+        if (this.recBytes > limit * 0.95) this.stopRec();
+      };
+      this.recorder.onstop = () => this.saveRec();
+
+      this.recorder.start(1000);
+      this.recording = true;
+      this.recTimer = setInterval(() => {
+        this.recSec += 1;
+        if (this.recSec >= REC_MAX_SEC) this.stopRec();
+      }, 1000);
+    },
+
+    stopRec() {
+      this.stopRecTimer();
+      if (this.recorder && this.recorder.state !== "inactive") {
+        try {
+          this.recorder.stop();
+        } catch (e) {}
+      }
+      this.recording = false;
+    },
+
+    stopRecTimer() {
+      if (this.recTimer) {
+        clearInterval(this.recTimer);
+        this.recTimer = null;
+      }
+    },
+
+    saveRec() {
+      const chunks = this.recChunks;
+      this.recChunks = [];
+      if (!chunks.length) {
+        this.closeCamera();
+        return;
+      }
+      const type = (this.recorder && this.recorder.mimeType) || "video/webm";
+      const ext = type.indexOf("mp4") !== -1 ? "mp4" : "webm";
+      const blob = new Blob(chunks, { type: type });
+      const file = new File([blob], `kamera-${camStamp()}.${ext}`, {
+        type: type.split(";")[0],
+      });
+      this.addFiles([file]);
+      this.closeCamera();
+    },
+
+    get recClock() {
+      const m = Math.floor(this.recSec / 60);
+      const s = this.recSec % 60;
+      return m + ":" + (s < 10 ? "0" + s : s);
     },
 
     shoot() {
@@ -403,11 +549,7 @@ function uploader() {
       canvas.toBlob(
         (blob) => {
           if (!blob) return;
-          const stamp = new Date()
-            .toISOString()
-            .slice(0, 19)
-            .replace(/[:T]/g, "-");
-          const file = new File([blob], `kamera-${stamp}.jpg`, {
+          const file = new File([blob], `kamera-${camStamp()}.jpg`, {
             type: "image/jpeg",
           });
           this.addFiles([file]);
