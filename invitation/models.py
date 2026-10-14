@@ -119,6 +119,16 @@ class Wedding(models.Model):
     hero_image = models.ImageField("Bosh rasm", upload_to=hero_path, blank=True)
     music = models.FileField("Fon musiqasi", upload_to=music_path, blank=True)
 
+    # Sahifadagi bo'limlarni yoqib-o'chirish. Belgisi olingan bo'lim
+    # saytda umuman chizilmaydi — ma'lumoti bazada saqlanib qoladi.
+    show_countdown = models.BooleanField("Sanoq bo'limi", default=True)
+    show_invite = models.BooleanField("Taklif matni bo'limi", default=True)
+    show_gallery = models.BooleanField("Galereya va slayd-shou", default=True)
+    show_event = models.BooleanField("Marosim va xarita", default=True)
+    show_duas = models.BooleanField("Duolar bo'limi", default=True)
+    show_wishes = models.BooleanField("Tilaklar bo'limi", default=True)
+    show_music = models.BooleanField("Fon musiqasi", default=True)
+
     rsvp_open = models.BooleanField("Javob berish ochiq", default=True)
     wishes_need_approval = models.BooleanField(
         "Tilaklar tasdiqdan o'tsin", default=True,

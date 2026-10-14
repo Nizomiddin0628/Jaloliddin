@@ -1,17 +1,17 @@
 {% extends "panel/base.html" %}
 {% load panel_tags %}
-{% block title %}Sahifa yozuvlari{% endblock %}
-{% block heading %}Sahifa yozuvlari{% endblock %}
+{% block title %}Bo'limlar{% endblock %}
+{% block heading %}Bo'limlar{% endblock %}
 {% block content %}
 <form method="post" x-data="{ lang: 'uz', dirty: false, q: '' }" @input="dirty = true">
   {% csrf_token %}
   <header class="page-head rise">
     <div>
-      <h2 class="page-title">Sahifa yozuvlari</h2>
-      <p class="page-sub">Saytdagi har bir sarlavha va tugma yozuvini o'zingiz yozasiz. Bo'sh qoldirsangiz — kulrang standart matn chiqadi.{% if changed %} Hozir {{ changed }} ta yozuv o'zgartirilgan.{% endif %}</p>
+      <h2 class="page-title">Bo'limlar</h2>
+      <p class="page-sub">Har bir bo'limni yoqasiz yoki o'chirasiz va nomini o'zingiz yozasiz. Bo'sh qoldirsangiz — kulrang standart matn chiqadi.{% if off %} Hozir {{ off }} ta bo'lim o'chirilgan.{% endif %}{% if changed %} {{ changed }} ta yozuv o'zgartirilgan.{% endif %}</p>
     </div>
     <div class="page-actions">
-      <a class="btn btn--ghost" href="/" target="_blank">{% icon "external" %} Saytda ko'rish</a>
+      <a class="btn btn--ghost" href="{% if panel_wedding %}/{{ panel_wedding.slug }}/{% else %}/{% endif %}" target="_blank">{% icon "external" %} Saytda ko'rish</a>
     </div>
   </header>
 
@@ -26,10 +26,25 @@
 
   <fieldset class="plain" {% if not can_edit %}disabled{% endif %}>
   {% for g in groups %}
-    <section class="card lbl-group rise" style="--d: {{ forloop.counter|add:1 }}">
-      <header class="card__head"><h3>{{ g.title }}</h3></header>
+    <section class="card lbl-group rise {% if g.field and not g.on %}is-off{% endif %}"
+             style="--d: {{ forloop.counter|add:1 }}" x-data="{ on: {{ g.on|yesno:'true,false,true' }} }">
+      <header class="card__head">
+        <div>
+          <h3>{{ g.title }}</h3>
+          {% if g.note %}<p class="lbl-group__note">{{ g.note }}</p>{% endif %}
+        </div>
+        {% if g.field %}
+          {# Bo'limni saytda ko'rsatish yoki yashirish #}
+          <input type="hidden" name="on__{{ g.field }}" :value="on ? '1' : '0'">
+          <button type="button" class="tgl" :aria-pressed="on.toString()" @click="on = !on"
+                  aria-label="Bo'limni yoqish yoki o'chirish"><i></i></button>
+        {% endif %}
+      </header>
+      {% if not g.rows and g.field %}
+        <p class="lbl-group__empty" x-text="on ? 'Bo\'lim saytda ko\'rinadi.' : 'Bo\'lim saytda ko\'rinmaydi.'"></p>
+      {% endif %}
       {% for r in g.rows %}
-        <div class="lbl" x-show="!q || '{{ r.hint|escapejs|lower }} {{ r.uz_default|escapejs|lower }} {{ r.en_default|escapejs|lower }}'.includes(q.toLowerCase())">
+        <div class="lbl" x-show="!q || '{{ r.hint|escapejs|lower }} {{ r.uz_default|escapejs|lower }} {{ r.en_default|escapejs|lower }}'.includes(q.toLowerCase()))">
           <span class="lbl__hint">{{ r.hint }}</span>
           <input name="uz__{{ r.key }}" value="{{ r.uz }}" placeholder="{{ r.uz_default }}" x-show="lang === 'uz'" maxlength="300" class="{% if r.uz %}is-set{% endif %}">
           <input name="en__{{ r.key }}" value="{{ r.en }}" placeholder="{{ r.en_default }}" x-show="lang === 'en'" x-cloak maxlength="300" class="{% if r.en %}is-set{% endif %}">

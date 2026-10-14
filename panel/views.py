@@ -311,12 +311,20 @@ def labels(request):
                     # Standart matn bilan bir xil bo'lsa saqlamaymiz
                     if val and val != i18n.UI[lang].get(key, ""):
                         new[lang][key] = val
-        Wedding.objects.filter(pk=w.pk).update(labels=new, updated_at=timezone.now())
-        messages.success(request, "Yozuvlar saqlandi. Saytda darhol ko'rinadi.")
+
+        # Bo'lim yoqib-o'chirgichlari shu formaning o'zida saqlanadi
+        switches = {
+            field: request.POST.get(f"on__{field}") == "1"
+            for field in i18n.SECTION_FIELDS
+        }
+        Wedding.objects.filter(pk=w.pk).update(
+            labels=new, updated_at=timezone.now(), **switches
+        )
+        messages.success(request, "Saqlandi. Saytda darhol ko'rinadi.")
         return redirect("panel:labels")
 
     groups = []
-    for title, items in i18n.EDITABLE:
+    for field, title, note, items in i18n.SECTIONS:
         rows = []
         for key, hint in items:
             rows.append({
@@ -327,10 +335,18 @@ def labels(request):
                 "uz_default": i18n.UI["uz"].get(key, ""),
                 "en_default": i18n.UI["en"].get(key, ""),
             })
-        groups.append({"title": title, "rows": rows})
+        groups.append({
+            "title": title,
+            "note": note,
+            "field": field,
+            "on": getattr(w, field) if field else None,
+            "rows": rows,
+        })
     changed = sum(len(v) for v in current.values() if isinstance(v, dict))
+    off = sum(1 for g in groups if g["field"] and not g["on"])
     return render(request, "panel/labels.html", {
-        "nav": "labels", "groups": groups, "can_edit": can_edit, "changed": changed,
+        "nav": "labels", "groups": groups, "can_edit": can_edit,
+        "changed": changed, "off": off,
     })
 
 

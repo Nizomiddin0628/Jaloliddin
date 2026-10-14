@@ -1493,3 +1493,22 @@ a.kpi:hover { background: var(--surface-2); }
   }
   .toyswitch--mob .toyswitch__item.is-on { color: #fff; }
 }
+
+/* ------------------------------------------------ bo'limlar sahifasi */
+.lbl-group .card__head { align-items: flex-start; gap: 1rem; }
+
+.lbl-group__note {
+  margin: .2rem 0 0;
+  font-size: .82rem;
+  color: var(--muted);
+}
+
+.lbl-group__empty {
+  margin: 0;
+  padding: .9rem 0 .2rem;
+  font-size: .88rem;
+  color: var(--muted);
+}
+
+/* O'chirilgan bo'lim xiraroq turadi — qaysi biri yopiqligi darrov ko'rinadi */
+.lbl-group.is-off { opacity: .62; }

@@ -260,68 +260,70 @@ def weekday(dt, lang):
 # maydon o'rniga yuqoridagi standart matn ko'rsatiladi.
 # ----------------------------------------------------------------------------
 
-EDITABLE = [
-    ("Ochilish oynasi", [
+# Sahifa bo'limlari: har birining yoqib-o'chirgichi va o'zgartirsa bo'ladigan
+# yozuvlari. Panel shu ro'yxat bo'yicha chiziladi, shuning uchun yangi bo'lim
+# qo'shilganda faqat shu yerga bitta qator yoziladi.
+#   (Wedding maydoni yoki None, bo'lim nomi, izoh, [(kalit, tushuntirish), ...])
+SECTIONS = [
+    (None, "Bosh ekran", "Mehmon ismi va kuyov-kelin ismlari — doim ko'rinadi", [
         ("dear", "Mehmon ismidan oldingi so'z"),
-        ("you_are_invited", "Ism ostidagi qator"),
-        ("open_invite", "Ochish tugmasi"),
-        ("open_thanks", "Ochish tugmasi (rahmat rejimida)"),
+        ("greeting_note", "Ism ostidagi qator"),
+        ("generic_label", "Umumiy havolada: ism o'rnidagi yozuv"),
+        ("generic_name", "Umumiy havolada: murojaat"),
     ]),
-    ("Bo'lim sarlavhalari", [
-        ("countdown_title", "Sanoq bo'limi"),
+    ("show_countdown", "Sanoq", "To'ygacha qolgan vaqt, to'q ko'k ekran", [
+        ("countdown_title", "Sarlavha"),
         ("today", "To'y kuni sanoq o'rniga chiqadigan yozuv"),
-        ("invite_title", "Taklif matni bo'limi"),
-        ("story_title", "Sevgi tarixi bo'limi"),
-        ("gallery_title", "Galereya bo'limi"),
-        ("gallery_title_thanks", "Galereya (rahmat rejimida)"),
-        ("event_title", "Marosim bo'limi"),
-        ("rsvp_title", "Javob bo'limi (umumiy havola)"),
-        ("rsvp_title_named", "Javob bo'limi (shaxsiy havola, {name} — mehmon ismi)"),
-        ("duas_title", "Duolar bo'limi"),
-        ("wishes_title", "Tilaklar bo'limi"),
-        ("upload_title", "Rasm yuklash bo'limi"),
+        ("days", "«kun» yozuvi"),
+        ("hours", "«soat» yozuvi"),
+        ("minutes", "«daqiqa» yozuvi"),
+        ("seconds", "«soniya» yozuvi"),
     ]),
-    ("Sarlavha ostidagi izohlar", [
-        ("rsvp_lead", "Javob bo'limi izohi"),
-        ("duas_lead", "Duolar bo'limi izohi"),
-        ("wishes_lead", "Tilaklar bo'limi izohi"),
+    ("show_invite", "Taklif matni", "To'y ma'lumotlaridagi «Taklif matni» shu yerda chiqadi", []),
+    ("show_gallery", "Galereya va slayd-shou", "Rasmlar bo'lmasa o'zi ko'rinmaydi", [
+        ("gallery_title", "Sarlavha"),
+        ("gallery_title_thanks", "Sarlavha (rahmat rejimida)"),
     ]),
-    ("Marosim ma'lumotlari", [
+    ("show_event", "Marosim va xarita", "Sana, vaqt, to'yxona va xarita", [
+        ("event_title", "Sarlavha"),
+        ("fact_date", "«Sana» yozuvi"),
         ("fact_time", "«Vaqt» yozuvi"),
         ("fact_place", "«Joy» yozuvi"),
         ("fact_dress", "«Kiyim» yozuvi"),
         ("welcome_at", "«Kutib olish» yozuvi"),
         ("starts_at", "«Boshlanishi» yozuvi"),
-        ("directions", "Xarita tugmasi"),
-        ("add_calendar", "Kalendar tugmasi"),
+        ("open_maps", "Xarita tugmasi"),
     ]),
-    ("Tugmalar va javoblar", [
-        ("coming", "«Kelaman» tugmasi"),
-        ("not_coming", "«Kelolmayman» tugmasi"),
-        ("how_many", "Kishi soni savoli"),
-        ("send_answer", "Javob yuborish tugmasi"),
-        ("rsvp_done_yes", "Kelaman deganda sarlavha"),
-        ("rsvp_done_yes_text", "Kelaman deganda matn"),
-        ("rsvp_done_no", "Kelolmayman deganda sarlavha"),
-        ("rsvp_done_no_text", "Kelolmayman deganda matn"),
+    ("show_duas", "Duolar", "Duolar bo'limidagi matnlar alohida sahifada", [
+        ("duas_title", "Sarlavha"),
+        ("duas_lead", "Sarlavha ostidagi izoh"),
+    ]),
+    ("show_wishes", "Tilaklar", "Mehmonlar tilak yozadi, siz tasdiqlaysiz", [
+        ("wishes_title", "Sarlavha"),
+        ("wishes_lead", "Sarlavha ostidagi izoh"),
+        ("your_name", "«Ismingiz» yozuvi"),
+        ("your_wish", "«Tilagingiz» yozuvi"),
         ("wish_placeholder", "Tilak maydonidagi namuna"),
-        ("send_wish", "Tilak yuborish tugmasi"),
+        ("send_wish", "Yuborish tugmasi"),
         ("no_wishes", "Tilak yo'qligida chiqadigan yozuv"),
     ]),
-    ("Sahifa oxiri va menyu", [
+    ("uploads_open", "Esdalik rasmlari", "To'ydan keyin mehmonlar rasm yuklaydi", [
+        ("upload_title", "Sarlavha"),
+        ("upload_note", "Yuklash maydonidagi izoh"),
+        ("upload_privacy", "Pastdagi maxfiylik yozuvi"),
+        ("pick_gallery", "«Galereyadan tanlash» tugmasi"),
+        ("take_photo", "«Rasmga olish» tugmasi"),
+    ]),
+    ("show_music", "Fon musiqasi", "O'ngdagi pastki burchakdagi tugma", []),
+    (None, "Sahifa oxiri", "Eng pastdagi yozuv va telefon raqamlar", [
         ("footer_note", "Oxiridagi yozuv"),
-        ("questions", "Telefonlar ustidagi yozuv"),
-        ("nav_home", "Menyu: bosh"),
-        ("nav_time", "Menyu: vaqt"),
-        ("nav_place", "Menyu: manzil"),
-        ("nav_rsvp", "Menyu: javob"),
-        ("nav_wishes", "Menyu: tilaklar"),
-        ("nav_photos", "Menyu: rasmlar"),
-        ("nav_upload", "Menyu: yuklash"),
     ]),
 ]
 
-EDITABLE_KEYS = {key for _, items in EDITABLE for key, _ in items}
+# Bo'limni yoqib-o'chiradigan maydonlar — panel faqat shularni saqlashi mumkin
+SECTION_FIELDS = [field for field, _, _, _ in SECTIONS if field]
+
+EDITABLE_KEYS = {key for _, _, _, items in SECTIONS for key, _ in items}
 
 
 def ui(lang, wedding=None):

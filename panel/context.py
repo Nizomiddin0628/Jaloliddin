@@ -17,7 +17,7 @@ def panel(request):
         ("guests", "panel:guests", "Mehmonlar", "users", can("view_guest")),
         ("wishes", "panel:wishes", "Tilaklar", "heart", can("view_wish")),
         ("wedding", "panel:wedding", "To'y ma'lumotlari", "ring", can("view_wedding")),
-        ("labels", "panel:labels", "Sahifa yozuvlari", "text", can("view_wedding")),
+        ("labels", "panel:labels", "Bo'limlar", "text", can("view_wedding")),
         ("gallery", "panel:gallery", "Galereya", "photo", can("view_galleryphoto")),
         ("duas", "panel:duas", "Duolar", "book", can("view_dua")),
         ("uploads", "panel:uploads", "Esdaliklar", "upload", can("view_guestupload")),

@@ -108,6 +108,7 @@
 {% if w.mode != 'thanks' %}
 
   {# =============================================== SANOQ — TO'Q EKRAN #}
+  {% if w.show_countdown %}
   <section class="sec sec--dark sec--full" x-data="countdown()">
     {% include "site/_frame.html" %}
     <div class="sec__inner appear">
@@ -134,9 +135,10 @@
       <p class="sec__foot">{{ event_date }} · {{ event_weekday }}</p>
     </div>
   </section>
+  {% endif %}
 
   {# =============================================== TAKLIF MATNI #}
-  {% if tx.invite_text %}
+  {% if tx.invite_text and w.show_invite %}
   <section class="sec sec--full">
     {% include "site/_frame.html" %}
     <div class="sec__inner appear">
@@ -148,7 +150,7 @@
   {% endif %}
 
   {# =============================================== ALMASHIB TURUVCHI RASMLAR #}
-  {% if gallery %}
+  {% if gallery and w.show_gallery %}
   <div class="slideshow" x-data="slideshow()">
     {% for p in gallery %}
       <img src="{{ p.image.url }}" alt="{{ p.caption }}"
@@ -169,7 +171,7 @@
 {% endif %}
 
   {# =============================================== GALEREYA #}
-  {% if gallery %}
+  {% if gallery and w.show_gallery %}
   <section class="sec sec--tinted" x-data="{ open: null }" @keydown.escape.window="open = null">
     <div class="sec__inner appear">
       <h2 class="sec__title">
@@ -195,6 +197,7 @@
 
 {% if w.mode != 'thanks' %}
   {# =============================================== MAROSIM VA XARITA #}
+  {% if w.show_event %}
   <section class="sec">
     <div class="sec__inner appear">
       <h2 class="sec__title">{{ L.event_title }}</h2>
@@ -243,11 +246,12 @@
       {% endif %}
     </div>
   </section>
+  {% endif %}
 
 {% endif %}
 
   {# =============================================== DUOLAR #}
-  {% if duas %}
+  {% if duas and w.show_duas %}
   <section class="sec sec--dark" x-data="{ i: 0, n: {{ duas|length }} }">
     {% include "site/_frame.html" %}
     <div class="sec__inner appear">
@@ -282,6 +286,7 @@
   {% endif %}
 
   {# =============================================== TILAKLAR #}
+  {% if w.show_wishes %}
   <section class="sec" x-data="wishWall()">
     <div class="sec__inner appear">
       <h2 class="sec__title">{{ L.wishes_title }}</h2>
@@ -328,6 +333,8 @@
       <p class="wishes-empty" x-show="!all.length" x-cloak>{{ L.no_wishes }}</p>
     </div>
   </section>
+
+  {% endif %}
 
   {# =============================================== ESDALIK RASMLARI #}
   {% if w.uploads_open %}
@@ -425,7 +432,7 @@
   </div>
 </footer>
 
-{% if music_url %}
+{% if music_url and w.show_music %}
 <div x-data="musicPlayer()">
   <audio x-ref="audio" src="{{ music_url }}" loop preload="auto"></audio>
   <button class="music" @click="toggle" :aria-pressed="playing"
