@@ -38,8 +38,12 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name="wedding",
             name="slug",
+            # db_index=False — maydon shu yerda indekssiz qo'shiladi. Aks holda
+            # pastdagi AlterField unique qilganda PostgreSQL o'sha nomli
+            # «...slug_..._like» indeksini ikkinchi marta yaratmoqchi bo'ladi
+            # va migratsiya «already exists» xatosi bilan to'xtaydi.
             field=models.SlugField(
-                default="", max_length=30, verbose_name="Havoladagi nom",
+                default="", max_length=30, db_index=False, verbose_name="Havoladagi nom",
                 help_text="Sayt manzilida shu ko'rinadi: sayt.uz/kuyov/ — faqat lotin harflari.",
             ),
         ),
