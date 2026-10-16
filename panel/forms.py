@@ -36,10 +36,16 @@ class WeddingForm(forms.ModelForm):
         # slug, title, is_default va editors — to'ylarni ajratuvchi texnik
         # maydonlar. Ularni faqat super admin Django admindan o'zgartiradi,
         # shunda tomon egasi tasodifan havolani buzib qo'ymaydi.
+        # show_* maydonlari "Bo'limlar" sahifasida boshqariladi. Ular shu
+        # formada chizilmaydi, shuning uchun forma tarkibida qolsa Django
+        # ularni "belgilanmagan" deb o'qiydi va har saqlashda hamma
+        # bo'limni o'chirib yuboradi.
         exclude = [
             "is_active", "mode", "rsvp_open", "uploads_open",
-            "wishes_need_approval", "show_english", "updated_at", "labels",
+            "wishes_need_approval", "updated_at", "labels",
             "slug", "title", "is_default", "editors",
+            "show_countdown", "show_invite", "show_gallery", "show_event",
+            "show_duas", "show_wishes", "show_music", "show_english",
         ]
         widgets = {
             "event_at": DateTimeLocal(),
