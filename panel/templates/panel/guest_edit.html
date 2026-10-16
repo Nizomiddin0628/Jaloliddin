@@ -30,8 +30,15 @@
           {% include "panel/_field.html" with f=form.seats %}
           {% include "panel/_field.html" with f=form.note %}
         </div>
-        <details class="more" {% if g.hero_image or g.music %}open{% endif %}>
-          <summary>{% icon "down" 18 %} Shu mehmonga alohida rasm va musiqa</summary>
+        <details class="more more--media" {% if g.hero_image or g.music %}open{% endif %}>
+          <summary>
+            <span class="more__ic">{% icon "photo" 18 %}</span>
+            <span class="more__text">
+              <b>{% if g.name %}{{ g.name }} uchun{% else %}Shu mehmonga{% endif %} alohida rasm va musiqa</b>
+              <small>Bo'sh qoldirsangiz umumiy rasm va musiqa ishlaydi</small>
+            </span>
+            {% icon "down" 18 %}
+          </summary>
           <div class="grid2">
             {% include "panel/_field.html" with f=form.hero_image %}
             {% include "panel/_field.html" with f=form.music %}

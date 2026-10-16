@@ -976,6 +976,30 @@ a.kpi:hover { background: var(--surface-2); }
 .more[open] summary svg { transform: rotate(180deg); }
 .more[open] > :not(summary) { animation: rise .45s var(--ease); margin-top: 1rem; }
 
+/* Mehmonga atalgan rasm/musiqa — ko'zga tashlanib tursin */
+.more--media {
+  border: 1px dashed var(--line-2);
+  border-radius: 10px;
+  padding: .85rem 1rem;
+  background: var(--gold-soft);
+}
+.more--media summary { gap: .7rem; color: var(--ink); }
+.more--media .more__ic {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  flex: none;
+  border-radius: 50%;
+  background: #fff;
+  color: var(--gold);
+}
+.more--media .more__text { display: flex; flex-direction: column; gap: .1rem; min-width: 0; }
+.more--media .more__text b { font-size: .92rem; }
+.more--media .more__text small { font-weight: 500; font-size: .78rem; color: var(--ink-2); }
+.more--media summary > .ic:last-child { margin-left: auto; flex: none; }
+
 .form-foot { display: flex; flex-wrap: wrap; align-items: center; gap: .6rem 1rem; margin-top: .4rem; }
 
 /* --- yorliqlar (to'y formasi) */
