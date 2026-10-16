@@ -114,11 +114,16 @@ def invitation_page(request, slug=None):
 
     # Google Maps — API kaliti kerak emas.
     # Koordinata bo'lsa aynan o'sha nuqta, bo'lmasa manzil matni bo'yicha.
+    # Yandex xaritada koordinata tartibi teskari: avval uzunlik, keyin kenglik.
     if has_point:
         point = f"{wedding.latitude},{wedding.longitude}"
         map_embed = f"https://www.google.com/maps?q={point}&hl=uz&z=17&output=embed"
         map_href = wedding.map_url or (
             f"https://www.google.com/maps/search/?api=1&query={point}"
+        )
+        yandex_href = (
+            f"https://yandex.uz/maps/?ll={wedding.longitude},{wedding.latitude}"
+            f"&z=17&pt={wedding.longitude},{wedding.latitude}"
         )
     elif place_text:
         query = quote(place_text)
@@ -126,9 +131,11 @@ def invitation_page(request, slug=None):
         map_href = wedding.map_url or (
             f"https://www.google.com/maps/search/?api=1&query={query}"
         )
+        yandex_href = f"https://yandex.uz/maps/?text={query}"
     else:
         map_embed = None
         map_href = wedding.map_url
+        yandex_href = None
 
     photos = list(wedding.gallery.all())
     wish_list = list(wedding.wishes.filter(is_visible=True)[:50])
@@ -205,6 +212,7 @@ def invitation_page(request, slug=None):
             "event_weekday": i18n.weekday(local, lang),
             "event_time": local.strftime("%H:%M"),
             "map_href": map_href,
+            "yandex_href": yandex_href,
             "map_embed": map_embed,
             "max_upload_mb": settings.MAX_UPLOAD_SIZE_MB,
             "site_url": settings.SITE_URL,

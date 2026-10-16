@@ -236,11 +236,18 @@
                   referrerpolicy="no-referrer-when-downgrade"></iframe>
           <div class="map__foot">
             <p class="map__addr">{{ tx.venue_address|default:tx.venue_name }}</p>
-            {% if map_href %}
-              <a class="btn btn--ghost" href="{{ map_href }}" target="_blank" rel="noopener noreferrer">
-                {{ L.open_maps }}
-              </a>
-            {% endif %}
+            <div class="map__links">
+              {% if map_href %}
+                <a class="btn btn--ghost" href="{{ map_href }}" target="_blank" rel="noopener noreferrer">
+                  {{ L.open_maps }}
+                </a>
+              {% endif %}
+              {% if yandex_href %}
+                <a class="btn btn--ghost" href="{{ yandex_href }}" target="_blank" rel="noopener noreferrer">
+                  {{ L.open_yandex }}
+                </a>
+              {% endif %}
+            </div>
           </div>
         </div>
       {% endif %}
