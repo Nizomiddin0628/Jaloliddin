@@ -238,13 +238,22 @@
             <p class="map__addr">{{ tx.venue_address|default:tx.venue_name }}</p>
             <div class="map__links">
               {% if map_href %}
-                <a class="btn btn--ghost" href="{{ map_href }}" target="_blank" rel="noopener noreferrer">
-                  {{ L.open_maps }}
+                <a class="btn btn--ghost btn--map" href="{{ map_href }}" target="_blank" rel="noopener noreferrer">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor"
+                       stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M12 21.5s-6.8-6.1-6.8-10.8a6.8 6.8 0 1 1 13.6 0C18.8 15.4 12 21.5 12 21.5z"/>
+                    <circle cx="12" cy="10.5" r="2.5"/>
+                  </svg>
+                  <span>{{ L.open_maps }}</span>
                 </a>
               {% endif %}
               {% if yandex_href %}
-                <a class="btn btn--ghost" href="{{ yandex_href }}" target="_blank" rel="noopener noreferrer">
-                  {{ L.open_yandex }}
+                <a class="btn btn--ghost btn--map" href="{{ yandex_href }}" target="_blank" rel="noopener noreferrer">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor"
+                       stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M21 3 3 10.6l7.5 2.9L13.4 21z"/>
+                  </svg>
+                  <span>{{ L.open_yandex }}</span>
                 </a>
               {% endif %}
             </div>

@@ -62,29 +62,69 @@ if (document.readyState === "loading") {
 
 /*
  * Sahifa ochilgandan bir necha soniya keyin o'zi sekin pastga tusha boshlaydi.
- * Mehmon barmog'ini tekkizishi bilanoq darhol to'xtaydi va boshqa qayta
- * boshlanmaydi — boshqaruv har doim odamda qoladi.
+ * Mehmon tegsa — to'xtamaydi, pauza qiladi: u tinchiganidan keyin o'sha
+ * joydan davom etadi. Butunlay to'xtashi faqat sahifa oxiriga yetganda.
  */
 function autoScroll() {
   if (REDUCED) return;
   // Mehmon tilni almashtirgan bo'lsa u sahifani allaqachon o'qiyapti
   if (window.scrollY > 40) return;
 
-  const SPEED = 22; // sekundiga piksel
+  const SPEED = 45; // sekundiga piksel
+  const START_DELAY = 2000;
+  const RESUME_DELAY = 2500; // tegishdan keyin shuncha kutib davom etadi
   const root = document.documentElement;
   let raf = null;
   let last = null;
   let pos = 0;
   let stopped = false;
+  let idle = null;
   const events = ["wheel", "touchstart", "pointerdown", "keydown"];
+
+  // Mehmon yozayotgan yoki kamera/rasm oynasi ochiq bo'lsa tegmaymiz.
+  function busy() {
+    const el = document.activeElement;
+    if (el && /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName)) return true;
+    return Array.from(document.querySelectorAll(".cam, .lightbox")).some(
+      (n) => n.offsetParent !== null
+    );
+  }
+
+  function halt() {
+    if (raf) cancelAnimationFrame(raf);
+    raf = null;
+    last = null;
+    // CSS'dagi silliq aylanishni qaytaramiz
+    root.style.scrollBehavior = "";
+  }
 
   function stop() {
     if (stopped) return;
     stopped = true;
-    if (raf) cancelAnimationFrame(raf);
-    // CSS'dagi silliq aylanishni qaytaramiz
-    root.style.scrollBehavior = "";
-    events.forEach((ev) => window.removeEventListener(ev, stop));
+    clearTimeout(idle);
+    halt();
+    events.forEach((ev) => window.removeEventListener(ev, pause));
+  }
+
+  function pause() {
+    if (stopped) return;
+    halt();
+    clearTimeout(idle);
+    idle = setTimeout(resume, RESUME_DELAY);
+  }
+
+  function resume() {
+    if (stopped) return;
+    if (busy()) {
+      idle = setTimeout(resume, RESUME_DELAY);
+      return;
+    }
+    pos = window.scrollY;
+    last = null;
+    // CSS'dagi scroll-behavior: smooth har bir qadamni bekor qiladi,
+    // shuning uchun aylanish davomida uni vaqtincha o'chiramiz
+    root.style.scrollBehavior = "auto";
+    raf = requestAnimationFrame(step);
   }
 
   function step(now) {
@@ -101,16 +141,8 @@ function autoScroll() {
     raf = requestAnimationFrame(step);
   }
 
-  events.forEach((ev) => window.addEventListener(ev, stop, { passive: true }));
-
-  setTimeout(() => {
-    if (stopped) return;
-    pos = window.scrollY;
-    // CSS'dagi scroll-behavior: smooth har bir qadamni bekor qiladi,
-    // shuning uchun aylanish davomida uni vaqtincha o'chiramiz
-    root.style.scrollBehavior = "auto";
-    raf = requestAnimationFrame(step);
-  }, 2000);
+  events.forEach((ev) => window.addEventListener(ev, pause, { passive: true }));
+  idle = setTimeout(resume, START_DELAY);
 }
 
 if (document.readyState === "loading") {
@@ -673,23 +705,28 @@ function musicPlayer() {
     async autoStart() {
       const audio = this.$refs.audio;
       if (!audio) return;
+      audio.muted = false;
       audio.volume = 0.45;
       try {
         await audio.play();
         // Chrome ba'zan xato bermay, ovozsiz ijro qiladi.
         // Shuning uchun haqiqatan yangrayotganini tekshiramiz.
         await new Promise((r) => setTimeout(r, 350));
-        if (audio.paused || audio.currentTime === 0) {
-          audio.pause();
-          this.playing = false;
-          this.armFirstTouch();
-        } else {
+        if (!audio.paused && audio.currentTime > 0) {
           this.playing = true;
+          return;
         }
-      } catch (e) {
-        this.playing = false;
-        this.armFirstTouch();
-      }
+      } catch (e) {}
+
+      // Ovozli avtoijro bloklandi. Ovozsiz boshlab turamiz — bunga
+      // brauzerlar ruxsat beradi — va birinchi tegishda ovozni yoqamiz.
+      // Shunda musiqa boshidan emas, o'sha joydan eshitiladi.
+      try {
+        audio.muted = true;
+        await audio.play();
+      } catch (e) {}
+      this.playing = false;
+      this.armFirstTouch();
     },
 
     armFirstTouch() {
@@ -702,10 +739,14 @@ function musicPlayer() {
       const events = ["pointerdown", "touchstart", "click", "keydown", "wheel"];
 
       const start = async () => {
+        const audio = this.$refs.audio;
+        if (!audio) return;
         try {
-          await this.$refs.audio.play();
+          audio.muted = false;
+          audio.volume = 0.45;
+          if (audio.paused) await audio.play();
           await new Promise((r) => setTimeout(r, 200));
-          if (!this.$refs.audio.paused) {
+          if (!audio.paused && !audio.muted) {
             this.playing = true;
             // Faqat chindan yangragandan keyin tinglovchilarni olib tashlaymiz
             events.forEach((ev) => window.removeEventListener(ev, start));
@@ -726,6 +767,7 @@ function musicPlayer() {
         this.playing = false;
       } else {
         try {
+          audio.muted = false;
           audio.volume = 0.45;
           await audio.play();
           this.playing = true;

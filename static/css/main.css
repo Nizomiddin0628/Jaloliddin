@@ -899,10 +899,34 @@ body:has(.adminbar) .langbar {
 }
 
 .map__links {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 0.6rem;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.55rem;
+  width: 100%;
+}
+
+/* Xarita tugmalari tor joyga ikkitadan sig'ishi kerak */
+.btn--map {
+  padding: 0.8rem 0.5rem;
+  font-size: 0.82rem;
+  letter-spacing: 0.07em;
+  gap: 0.5rem;
+  white-space: nowrap;
+}
+
+.btn--map svg {
+  flex: none;
+  opacity: 0.75;
+}
+
+.btn--map:hover svg {
+  opacity: 1;
+}
+
+@media (max-width: 340px) {
+  .map__links {
+    grid-template-columns: 1fr;
+  }
 }
 
 .map__addr {
